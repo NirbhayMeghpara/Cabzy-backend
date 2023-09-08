@@ -1,7 +1,7 @@
 const express = require('express')
 const apiRouter = require('./routers/api')
 const cors = require('cors')
-const mongoose = require('./db/mongoose')
+require('./db/mongoose')
 
 const port = process.env.PORT || 3000
 
