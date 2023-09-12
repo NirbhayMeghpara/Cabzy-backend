@@ -15,12 +15,12 @@ router.post("/login", async (req, res) => {
   }
 })
 
-router.post("/logout", auth, async (req, res) => {
+router.get("/logout", auth, async (req, res) => {
   try {
     req.admin.tokens = req.admin.tokens.filter((item) => item.token !== req.token)
     await req.admin.save()
 
-    res.send("Admin logout successfully !!")
+    res.send({ msg: "Admin logout successfully !!" })
   } catch (error) {
     res.status(500).send("Internal error occurred while logging out")
   }
@@ -30,7 +30,7 @@ router.post('/logoutAll', auth, async (req, res) => {
   try {
     req.admin.tokens = []
     await req.admin.save()
-    res.send("All session logged out successfully")
+    res.send({ msg: "All session logged out successfully" })
   } catch (error) {
     res.status(500).send("Internal error occurred while logging out")
   }
