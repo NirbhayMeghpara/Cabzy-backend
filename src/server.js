@@ -1,7 +1,8 @@
 const express = require('express')
 const adminRouter = require('./routers/adminRouter')
+const vehicleTypeRouter = require('./routers/vehicleTypeRouter')
 const cors = require('cors')
-const auth = require('./middleware/auth')
+const path = require("path")
 require('./db/mongoose')
 
 const port = process.env.PORT || 3000
@@ -10,7 +11,13 @@ const app = express()
 
 app.use(express.json())
 app.use(cors())
+
+const uploadPath = path.join(__dirname, "../uploads")
+app.use(express.static(uploadPath))
+
+// Routes
 app.use(adminRouter)
+app.use(vehicleTypeRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)
