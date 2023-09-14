@@ -11,8 +11,7 @@ const storage = multer.diskStorage({
     return cb(null, './uploads/vehicleType')
   },
   filename: function (req, file, cb) {
-    const arr = file.originalname.split(".")
-    const extension = arr[arr.length - 1]
+    const extension = file.originalname.split(".").pop()
     return cb(null, `${req.body.vehicleType}_image.${extension}`)
   }
 })
@@ -30,8 +29,22 @@ const upload = multer({
   storage
 })
 
+// ----------------------------  Adding vehicleType to database  ---------------------------- // 
+
 router.post('/vehicle/add', auth, upload.single("vehicleImage"), vehicleController.add, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })
+
+
+// ----------------------------  Fetching vehicleType from database  ---------------------------- // 
+
+router.get('/vehicle', auth, vehicleController.fetch)
+
+// ----------------------------  Updating vehicleType from database  ---------------------------- // 
+
+router.patch('/vehicle/edit/:id', auth, upload.single("vehicleImage"), vehicleController.edit, (err, req, res, next) => {
+  res.status(400).send({ error: err.message })
+})
+
 
 module.exports = router
