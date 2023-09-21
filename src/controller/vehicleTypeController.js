@@ -1,11 +1,13 @@
+const mongoose = require('mongoose')
 const VehicleType = require('../models/vehicleType')
 const fs = require("fs")
 const path = require("path")
 
+
 async function add(req, res) {
   try {
     let vehicleType = req.body.vehicleType
-    vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1)
+    vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1).toLowerCase()
 
     const vehicleData = {
       vehicleType,
@@ -17,9 +19,15 @@ async function add(req, res) {
     res.status(201).send({ msg: `${vehicleType} added successfully` })
   } catch (error) {
     if (error.keyValue) {
+
+      const uploadPath = path.join(__dirname, "../../uploads")
+      fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+
+
       error.message = `${error.keyValue.vehicleType} is already added !!`
+      return res.status(409).send({ error: error.message })
     }
-    res.status(409).send({ error: error.message })
+    res.status(500).send({ error: error.message })
   }
 }
 
@@ -27,7 +35,7 @@ async function fetch(req, res) {
   try {
     const vehicleTypeData = await VehicleType.find({})
     if (!vehicleTypeData.length) {
-      return res.send({ msg: 'No vehicle type is found' })
+      return res.send({ msg: 'No vehicle types found' })
     }
     res.send(vehicleTypeData)
   } catch (error) {
@@ -38,27 +46,30 @@ async function fetch(req, res) {
 async function edit(req, res) {
   try {
     let vehicleType = req.body.vehicleType
-    vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1)
+    vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1).toLowerCase()
 
-    const vehicle = await VehicleType.findById(req.params.id)
+    const objectId = new mongoose.Types.ObjectId(req.params.id);
+    const vehicle = await VehicleType.findById(objectId)
 
     if (!vehicle) {
-      return res.status(401).send('No such vehicle found !!')
+      return res.status(401).send({ msg: 'No such vehicle found !!' })
     }
     vehicle.vehicleType = vehicleType
 
     if (req.file) {
-      const uploadPath = path.join(__dirname, "../../uploads")
-      fs.unlinkSync(`${uploadPath}/${vehicle.vehicleImage}`)
+      const newFile = `vehicleType/${req.file.filename}`
+
+      if (newFile !== vehicle.vehicleImage) {
+        const uploadPath = path.join(__dirname, "../../uploads")
+        fs.unlinkSync(`${uploadPath}/${vehicle.vehicleImage}`)
+      }
       vehicle.vehicleImage = `vehicleType/${req.file.filename}`
     }
-
     await vehicle.save()
-    console.log(vehicle)
     res.status(200).send({ msg: `Vehicle edited successfully !!` })
   } catch (error) {
     if (error.keyValue) {
-      error.message = `${error.keyValue.vehicleType} is already added !!`
+      error.message = `${error.keyValue.vehicleType} is already exists !!`
     }
     res.status(409).send({ error: error.message })
   }
