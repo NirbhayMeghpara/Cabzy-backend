@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 const validator = require("validator")
 
-
 const vehicleTypeSchema = new mongoose.Schema({
   vehicleType: {
     type: String,
