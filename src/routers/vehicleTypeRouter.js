@@ -13,10 +13,9 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const extension = file.originalname.split(".").pop()
 
-    let type = req.body.vehicleType
-    type = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
+    let type = req.body.vehicleType.toLowerCase()
 
-    return cb(null, `${type}_image.${extension}`)
+    return cb(null, `${Date.now()}_${type}.${extension}`)
   }
 })
 
