@@ -17,13 +17,12 @@ async function add(req, res) {
     const vehicle = await new VehicleType(vehicleData)
     await vehicle.save()
     res.status(201).send({ msg: `${vehicleType} added successfully` })
-  } catch (error) {
+  }
+  catch (error) {
+    const uploadPath = path.join(__dirname, "../../uploads")
+    fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+
     if (error.keyValue) {
-
-      const uploadPath = path.join(__dirname, "../../uploads")
-      fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
-
-
       error.message = `${error.keyValue.vehicleType} is already added !!`
       return res.status(409).send({ error: error.message })
     }
@@ -54,20 +53,21 @@ async function edit(req, res) {
     if (!vehicle) {
       return res.status(401).send({ msg: 'No such vehicle found !!' })
     }
+    const oldImage = vehicle.vehicleImage
+
     vehicle.vehicleType = vehicleType
+    vehicle.vehicleImage = `vehicleType/${req.file.filename}`
 
-    if (req.file) {
-      const newFile = `vehicleType/${req.file.filename}`
-
-      if (newFile !== vehicle.vehicleImage) {
-        const uploadPath = path.join(__dirname, "../../uploads")
-        fs.unlinkSync(`${uploadPath}/${vehicle.vehicleImage}`)
-      }
-      vehicle.vehicleImage = `vehicleType/${req.file.filename}`
-    }
     await vehicle.save()
+
+    const uploadPath = path.join(__dirname, "../../uploads")
+    fs.unlinkSync(`${uploadPath}/${oldImage}`)
+
     res.status(200).send({ msg: `Vehicle edited successfully !!` })
   } catch (error) {
+    const uploadPath = path.join(__dirname, "../../uploads")
+    fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+
     if (error.keyValue) {
       error.message = `${error.keyValue.vehicleType} is already exists !!`
     }
