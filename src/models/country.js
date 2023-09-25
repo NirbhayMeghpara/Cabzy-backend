@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const validator = require("validator")
 
 const countrySchema = new mongoose.Schema({
   name: {
@@ -28,6 +27,15 @@ const countrySchema = new mongoose.Schema({
     trim: true,
     required: true,
   },
+  alphaCode: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  latLong: {
+    type: Array,
+    required: true
+  }
 })
 
 const Country = mongoose.model('Country', countrySchema)
