@@ -2,8 +2,8 @@ const Country = require("../models/country")
 
 async function add(req, res) {
   try {
-    if (!req.body) {
-      return res.send({ msg: "Please provide valid input" })
+    if (Object.keys(req.body).length === 0) {
+      throw new Error("Please provide valid input")
     }
 
     const country = await Country(req.body)
