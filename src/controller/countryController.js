@@ -1,10 +1,13 @@
 const Country = require("../models/country")
 
 async function add(req, res) {
+  console.log(req.body)
   try {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please provide valid input")
     }
+
+    req.body.latLong = JSON.parse(req.body.latLong)
 
     const country = await Country(req.body)
     await country.save()
