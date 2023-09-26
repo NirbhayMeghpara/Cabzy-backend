@@ -8,7 +8,7 @@ const router = new express.Router()
 
 const upload = multer();
 
-router.post("/country/add", auth, countryController.add)
+router.post("/country/add", upload.none(), auth, countryController.add)
 
 router.get("/country", auth, countryController.fetch)
 
