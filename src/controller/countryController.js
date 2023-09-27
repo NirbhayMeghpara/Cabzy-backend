@@ -1,7 +1,6 @@
 const Country = require("../models/country")
 
 async function add(req, res) {
-  console.log(req.body)
   try {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please provide valid input")
