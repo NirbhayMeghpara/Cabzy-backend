@@ -65,8 +65,6 @@ async function edit(req, res) {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please provide valid input")
     }
-    const places = req.body.location.split(",")
-    const cityName = places[0].trim()
 
     const _id = new mongoose.Types.ObjectId(req.body.id);
     const city = await City.findById(_id)
@@ -74,8 +72,6 @@ async function edit(req, res) {
       res.status(404).send("No such city found !!")
       return
     }
-    city.name = cityName
-    city.location = req.body.location
     city.coordinates = req.body.coordinates
     await city.save()
     res.send({ msg: `${city.name} edited successfully` })
