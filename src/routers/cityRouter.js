@@ -8,12 +8,15 @@ const upload = multer()
 const router = new express.Router()
 
 // ----------------------------  Adding city to database  ---------------------------- // 
-router.post('/city/add', upload.none(), cityController.add)
+router.post('/city/add', auth, upload.none(), cityController.add)
+
+// ---------------------  Fetching all city of specific country to database  --------------------- // 
+router.get('/city/fetchAll/:country', auth, cityController.fetchAllCity)
 
 // ---------------------  Fetching city of specific country to database  --------------------- // 
-router.get('/city/fetch/:country', cityController.fetchCity)
+router.get('/city/fetch/:country', auth, cityController.fetchCity)
 
 // ----------------------------  Updating city to database  ---------------------------- // 
-router.patch('/city/edit', upload.none(), cityController.edit)
+router.patch('/city/edit', auth, upload.none(), cityController.edit)
 
 module.exports = router

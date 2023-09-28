@@ -38,7 +38,6 @@ router.post('/vehicle/add', auth, upload.single("vehicleImage"), vehicleControll
   res.status(400).send({ error: err.message })
 })
 
-
 // ----------------------------  Fetching vehicleType from database  ---------------------------- // 
 
 router.get('/vehicle', auth, vehicleController.fetch)
@@ -48,6 +47,5 @@ router.get('/vehicle', auth, vehicleController.fetch)
 router.patch('/vehicle/edit/:id', auth, upload.single("vehicleImage"), vehicleController.edit, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })
-
 
 module.exports = router
