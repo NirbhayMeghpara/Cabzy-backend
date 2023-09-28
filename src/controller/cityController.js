@@ -24,6 +24,21 @@ async function add(req, res) {
   }
 }
 
+async function fetchAllCity(req, res) {
+  try {
+    const country = decodeURIComponent(req.params.country).toLowerCase();
+
+    const cities = await City.aggregate([{ $match: { country } }]);
+    if (!cities.length) {
+      res.status(404).send({ msg: "No City Available" })
+      return
+    }
+    res.send(cities)
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function fetchCity(req, res) {
   try {
     const country = decodeURIComponent(req.params.country).toLowerCase();
@@ -80,4 +95,4 @@ async function edit(req, res) {
   }
 }
 
-module.exports = { add, fetchCity, edit }
+module.exports = { add, fetchAllCity, fetchCity, edit }

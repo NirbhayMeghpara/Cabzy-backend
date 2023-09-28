@@ -1,6 +1,7 @@
 const express = require('express')
 const adminRouter = require('./routers/adminRouter')
 const vehicleTypeRouter = require('./routers/vehicleTypeRouter')
+const vehiclePriceRouter = require('./routers/vehiclePriceRouter')
 const countryRouter = require('./routers/countryRouter')
 const cityRouter = require('./routers/cityRouter')
 const cors = require('cors')
@@ -22,6 +23,7 @@ app.use(adminRouter)
 app.use(vehicleTypeRouter)
 app.use(countryRouter)
 app.use(cityRouter)
+app.use(vehiclePriceRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)
