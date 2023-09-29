@@ -84,7 +84,7 @@ async function edit(req, res) {
     const _id = new mongoose.Types.ObjectId(req.body.id);
     const city = await City.findById(_id)
     if (!city) {
-      res.status(404).send("No such city found !!")
+      res.status(404).send({ msg: "No such city found !!" })
       return
     }
     city.coordinates = req.body.coordinates

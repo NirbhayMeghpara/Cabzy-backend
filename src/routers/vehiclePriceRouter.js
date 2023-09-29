@@ -10,4 +10,10 @@ const router = new express.Router()
 // ----------------------------  Adding city to database  ---------------------------- // 
 router.post('/vehiclePrice/add', auth, upload.none(), vehiclePriceController.addPrice)
 
+// ---------------------  Fetching vehicle pricing of specific city from database  --------------------- // 
+router.get('/vehiclePrice/fetch/:city', auth, vehiclePriceController.fetchPrice)
+
+// ----------------------------  Updating city to database  ---------------------------- // 
+router.patch('/vehiclePrice/edit', auth, upload.none(), vehiclePriceController.editPrice)
+
 module.exports = router
