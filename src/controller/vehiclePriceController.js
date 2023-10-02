@@ -109,4 +109,4 @@ function capitalizeFirstLetter(word) {
   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }
 
-module.exports = { addPrice, fetchPrice, editPrice }
+module.exports = { addPrice, fetchPrice, editPrice, capitalizeFirstLetter }

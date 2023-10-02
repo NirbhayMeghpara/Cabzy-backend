@@ -19,8 +19,10 @@ async function add(req, res) {
     res.status(201).send({ msg: `${vehicleType} added successfully` })
   }
   catch (error) {
-    const uploadPath = path.join(__dirname, "../../uploads")
-    fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+    if (req.file) {
+      const uploadPath = path.join(__dirname, "../../uploads")
+      fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+    }
 
     if (error.keyValue) {
       error.message = `${error.keyValue.vehicleType} is already added !!`
@@ -65,8 +67,10 @@ async function edit(req, res) {
 
     res.status(200).send({ msg: `Vehicle edited successfully !!` })
   } catch (error) {
-    const uploadPath = path.join(__dirname, "../../uploads")
-    fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+    if (req.file) {
+      const uploadPath = path.join(__dirname, "../../uploads")
+      fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)
+    }
 
     if (error.keyValue) {
       error.message = `${error.keyValue.vehicleType} is already exists !!`

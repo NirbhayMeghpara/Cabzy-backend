@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const extension = file.originalname.split(".").pop()
 
-    let type = req.body.vehicleType.toLowerCase()
+    const type = req.body.vehicleType.toLowerCase()
 
     return cb(null, `${Date.now()}_${type}.${extension}`)
   }
