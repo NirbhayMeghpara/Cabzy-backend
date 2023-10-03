@@ -26,19 +26,16 @@ async function add(req, res) {
       fs.unlinkSync(`${uploadPath}/user/${req.file.filename}`)
     }
 
-
-    console.log(error)
-
     switch (true) {
       case !!(error.keyPattern && error.keyPattern.email):
         return res.status(403).send({
           field: "email",
-          message: "Email is already registered",
+          msg: "Email is already registered",
         });
       case !!(error.keyPattern && error.keyPattern.phone):
         return res.status(403).send({
           field: "phone",
-          message: "Phone number is already registered",
+          msg: "Phone number is already registered",
         });
       case !!(error.errors && error.errors.name):
         return res.status(400).send({ error: error.errors.name.properties.message });
@@ -55,33 +52,34 @@ async function add(req, res) {
 }
 
 async function fetch(req, res) {
-  const currentPage = parseInt(req.query.page) || 1
-  const limit = parseInt(req.query.limit) || 5
-  const searchValue = req.query.search ? req.query.search.trim() : ""
+  try {
+    const currentPage = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 4
+    const searchValue = req.query.search ? req.query.search.trim() : ""
 
-  const pipeline = []
+    const pipeline = []
 
-  if (searchValue) {
-    const regex = new RegExp(searchValue, "i")
+    if (searchValue) {
+      const regex = new RegExp(searchValue, "i")
+      pipeline.push({
+        $match: {
+          $or: [{ name: regex }, { email: regex }, { phoneCode: regex }, { phone: regex }],
+        },
+      })
+    }
+
     pipeline.push({
-      $match: {
-        $or: [{ name: regex }, { email: regex }, { phoneCode: regex }, { phone: regex }],
+      $facet: {
+        data: [{ $count: "userCount" }],
+        users: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
       },
     })
-  }
 
-  pipeline.push({
-    $facet: {
-      data: [{ $count: "userCount" }],
-      users: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
-    },
-  })
-
-  try {
     const result = await User.aggregate(pipeline)
 
     if (!result[0].users.length) {
-      throw new Error("No user found")
+      res.status(404).send({ msg: `No users found !!` })
+      return
     }
 
     const userCount = result[0].data[0].userCount
