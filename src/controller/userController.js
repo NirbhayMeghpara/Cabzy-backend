@@ -56,6 +56,8 @@ async function fetch(req, res) {
     const currentPage = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 4
     const searchValue = req.query.search ? req.query.search.trim() : ""
+    const sortBy = req.query.sort ? req.query.sort.trim() : "createdBy" // Default sorting field is 'createdBy'
+    const sortOrder = req.query.sortOrder === "desc" ? -1 : 1 // Default is ascending order
 
     const pipeline = []
 
@@ -67,6 +69,12 @@ async function fetch(req, res) {
         },
       })
     }
+
+    pipeline.push({
+      $sort: {
+        [sortBy]: sortOrder,
+      },
+    });
 
     pipeline.push({
       $facet: {

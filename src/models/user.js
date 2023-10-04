@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
           throw new Error("Enter a valid phone number")
       },
     },
+    defaultCard: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Card"
+    }
   },
   {
     timestamps: true,
