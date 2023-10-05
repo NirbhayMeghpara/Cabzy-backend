@@ -1,59 +1,79 @@
 const mongoose = require('mongoose');
 const Card = require('../models/card')
 const User = require('../models/user')
+require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 async function add(req, res) {
   try {
-    const { cardHolderName, cardNumber, expiryDate, cvv } = req.body
+    // const { cardHolderName, cardNumber, expiryDate, cvv } = req.body
+    const token = req.body.token
     const owner = new mongoose.Types.ObjectId(req.body.id);
-    const cardDetails = {
-      owner,
-      cardHolderName,
-      cardNumber,
-      expiryDate,
-      cvv,
+
+    // const [expiryMonth, expiryYear] = expiryDate.split("/");
+    let userStripeID
+    const user = await User.findById(owner)
+    if (!user.stripeID) {
+      const customer = await stripe.customers.create({
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      });
+
+      if (!customer) {
+        res.status(500).send({ error: "User not created successfully in stripe" })
+        return
+      }
+      user.stripeID = customer.id
+      userStripeID = customer.id
     }
 
-    const card = new Card(cardDetails)
-    await card.save()
+    userStripeID = user.stripeID
+    const source = await stripe.customers.createSource(userStripeID, {
+      source: token
+    })
 
-    const user = await User.findByIdAndUpdate(owner, { defaultCard: card._id })
+    if (!source) {
+      res.status(500).send({ error: "Card not added to Stripe customer" });
+      return
+    }
+    user.cards.push(source.id)
+    // const cardDetails = {
+    //   owner,
+    //   cardHolderName,
+    //   cardNumber,
+    //   expiryDate,
+    //   cvv,
+    // }
+    // const card = new Card(cardDetails)
+
+
+    // await card.save()
+
     await user.save()
     res.status(201).send({ msg: `Card added successfully` })
   } catch (error) {
-
-    switch (true) {
-      case !!(error.keyPattern && error.keyPattern.cardNumber):
-        return res.status(403).send({ msg: "Card is already registered" });
-      case !!(error.errors && error.errors.cardHolderName):
-        return res.status(400).send({ error: error.errors.cardHolderName.properties.message });
-      case !!(error.errors && error.errors.cardNumber):
-        return res.status(400).send({ error: error.errors.cardNumber.properties.message });
-      case !!(error.errors && error.errors.cvv):
-        return res.status(400).send({ error: error.errors.cvv.properties.message });
-      default:
-        res.status(500).send({ error: error.message })
-    }
+    res.status(500).send({ error: error.message })
   }
 }
 
 async function fetchCards(req, res) {
   try {
-    console.log(req.body)
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please enter a valid data")
     }
 
     const userID = new mongoose.Types.ObjectId(req.body.id);
+    const user = await User.findById(userID)
 
-    const cards = await Card.find({ owner: userID })
-
-    if (!cards.length) {
-      res.status(404).send({ msg: `No users found !!` })
+    if (!user.stripeID) {
+      res.status(404).send({ error: 'No card available. Please add card' })
       return
     }
 
-    res.send(cards)
+    const cards = await stripe.customers.listSources(user.stripeID, { object: 'card' })
+    const customer = await stripe.customers.retrieve(user.stripeID)
+    res.send({ cards: cards.data, defaultCard: customer.default_source })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
@@ -61,47 +81,84 @@ async function fetchCards(req, res) {
 
 async function deleteCard(req, res) {
   try {
+    const cardID = req.body.cardID;
+    const userID = new mongoose.Types.ObjectId(req.body.userID);
 
-    const cardID = new mongoose.Types.ObjectId(req.body.id);
-    const ownerID = new mongoose.Types.ObjectId(req.body.userID);
+    const user = await User.findById(userID)
 
-    const pipeline = [
-      {
-        $match: {
-          owner: ownerID
-        }
-      },
-      {
-        $facet: {
-          data: [{ $count: "cardCount" }],
-          card: [{ $match: { _id: cardID } }],
-          cards: [{ $match: { _id: { $ne: cardID }, owner: ownerID } }]
-        },
-      }
-    ];
+    if (!(user.stripeID && user.cards.includes(cardID))) {
+      res.status(400).send({ error: 'Unauthorized Card Access' })
+      return
+    }
+    const response = await stripe.customers.deleteSource(user.stripeID, cardID)
 
-    const result = await Card.aggregate(pipeline)
-
-    if (result[0].card.length === 0) {
-      res.status(400).send({ msg: "Unauthorized card access" })
+    if (!response.deleted) {
+      res.status(500).send({ error: "Error occured while deleting card !!" })
       return
     }
 
-    const user = await User.findById(ownerID)
-
-    if (result[0].data[0].cardCount === 1) {
-      user.defaultCard = ''
-    } else {
-      user.defaultCard = result[0].cards[0]._id
-    }
-
+    user.cards = user.cards.filter(id => id.toString() !== cardID.toString());
     await user.save()
-    await Card.findByIdAndDelete(cardID);
-
     res.send({ msg: `Card deleted successfully :(` })
+
+    // const pipeline = [
+    //   {
+    //     $match: {
+    //       owner: ownerID
+    //     }
+    //   },
+    //   {
+    //     $facet: {
+    //       data: [{ $count: "cardCount" }],
+    //       card: [{ $match: { _id: cardID } }],
+    //       cards: [{ $match: { _id: { $ne: cardID }, owner: ownerID } }]
+    //     },
+    //   }
+    // ];
+
+    // const result = await Card.aggregate(pipeline)
+
+    // if (result[0].card.length === 0) {
+    //   res.status(400).send({ msg: "Unauthorized card access" })
+    //   return
+    // }
+
+    // const user = await User.findById(ownerID)
+
+    // if (result[0].data[0].cardCount === 1) {
+    //   user.defaultCard = ''
+    // } else {
+    //   user.defaultCard = result[0].cards[0]._id
+    // }
+
+    // await Card.findByIdAndDelete(cardID);
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
 }
 
-module.exports = { add, fetchCards, deleteCard }
+async function changeDefaultCard(req, res) {
+  try {
+    if (Object.keys(req.body).length === 0) {
+      throw new Error("Please enter a valid data")
+    }
+    const newCardID = req.body.cardID;
+    const userID = new mongoose.Types.ObjectId(req.body.userID);
+
+    const user = await User.findById(userID)
+
+    if (!(user.stripeID && user.cards.includes(newCardID))) {
+      res.status(400).send({ error: 'Unauthorized Card Access' })
+      return
+    }
+
+    const response = await stripe.customers.update(user.stripeID, { default_source: newCardID })
+    console.log(response)
+    res.send({ msg: `Default card updated successfully` })
+
+  } catch (error) {
+
+  }
+}
+
+module.exports = { add, fetchCards, deleteCard, changeDefaultCard }

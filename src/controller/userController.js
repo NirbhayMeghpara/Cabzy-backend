@@ -2,6 +2,9 @@ const mongoose = require('mongoose')
 const User = require('../models/user')
 const path = require('path')
 const fs = require('fs')
+require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_KEY);
+
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
 
 async function add(req, res) {
@@ -170,4 +173,37 @@ async function deleteUser(req, res) {
   }
 }
 
-module.exports = { add, fetch, edit, deleteUser }
+//---------------------- Stripe setup intent ----------------------//
+
+async function setupIntent(req, res) {
+  try {
+    const _id = new mongoose.Types.ObjectId(req.body.id);
+
+    const user = await User.findById(_id)
+    if (!user.stripeID) {
+      const customer = await stripe.customers.create({
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      });
+
+      if (!customer) {
+        res.status(500).send({ error: "User not created successfully in stripe" })
+        return
+      }
+      user.stripeID = customer.id
+    }
+
+    const setupIntent = await stripe.setupIntents.create({
+      customer: user.stripeID,
+      automatic_payment_methods: { enabled: true },
+    });
+
+    await user.save()
+    res.send({ clientSecret: setupIntent.client_secret })
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
+module.exports = { add, fetch, edit, deleteUser, setupIntent }
