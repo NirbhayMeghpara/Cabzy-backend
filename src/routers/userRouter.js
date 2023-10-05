@@ -51,4 +51,7 @@ router.patch('/user/edit', auth, upload.single("profile"), userController.edit, 
 
 router.delete('/user/delete/:id', auth, userController.deleteUser)
 
+//---------------------------------- Stripe intent ----------------------------------//
+router.post('/user/createStripeIntent', auth, upload.none(), userController.setupIntent)
+
 module.exports = router

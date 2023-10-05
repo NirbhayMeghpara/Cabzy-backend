@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
           throw new Error("Enter a valid phone number")
       },
     },
+    cards: {
+      type: Array
+    },
+    stripeID: {
+      type: String,
+      trim: true
+    },
     defaultCard: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Card"

@@ -21,4 +21,8 @@ router.post('/card', auth, upload.none(), cardController.fetchCards)
 
 router.delete('/card/delete', auth, upload.none(), cardController.deleteCard)
 
+//---------------------------------- Deleting card details from database ----------------------------------//
+
+router.post('/card/changeDefault', auth, upload.none(), cardController.changeDefaultCard)
+
 module.exports = router
