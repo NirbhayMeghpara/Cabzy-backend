@@ -6,6 +6,8 @@ const cityRouter = require('./routers/cityRouter')
 const vehiclePriceRouter = require('./routers/vehiclePriceRouter')
 const userRouter = require('./routers/userRouter')
 const cardRouter = require('./routers/cardRouter')
+const driverRouter = require('./routers/driverRouter')
+
 const cors = require('cors')
 const path = require("path")
 require('./db/mongoose')
@@ -28,6 +30,7 @@ app.use(cityRouter)
 app.use(vehiclePriceRouter)
 app.use(userRouter)
 app.use(cardRouter)
+app.use(driverRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)

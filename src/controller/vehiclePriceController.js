@@ -35,6 +35,22 @@ async function addPrice(req, res) {
   }
 }
 
+async function fetchAllPrice(req, res) {
+  try {
+    const city = capitalizeFirstLetter(decodeURIComponent(req.params.city))
+
+    const pricing = await VehiclePrice.aggregate([{ $match: { city } }]);
+    if (!pricing.length) {
+      res.status(404).send({ msg: `No pricing available for ${city}` })
+      return
+    }
+
+    res.send(pricing)
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function fetchPrice(req, res) {
   try {
     const city = capitalizeFirstLetter(decodeURIComponent(req.params.city))
@@ -109,4 +125,4 @@ function capitalizeFirstLetter(word) {
   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }
 
-module.exports = { addPrice, fetchPrice, editPrice, capitalizeFirstLetter }
+module.exports = { addPrice, fetchPrice, editPrice, fetchAllPrice, capitalizeFirstLetter }

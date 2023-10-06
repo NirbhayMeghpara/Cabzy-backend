@@ -10,6 +10,9 @@ const router = new express.Router()
 // ----------------------------  Adding city to database  ---------------------------- // 
 router.post('/vehiclePrice/add', auth, upload.none(), vehiclePriceController.addPrice)
 
+// ---------------------  Fetching all vehicle pricing of specific city from database  --------------------- // 
+router.get('/vehiclePrice/fetchAll/:city', auth, vehiclePriceController.fetchAllPrice)
+
 // ---------------------  Fetching vehicle pricing of specific city from database  --------------------- // 
 router.get('/vehiclePrice/fetch/:city', auth, vehiclePriceController.fetchPrice)
 

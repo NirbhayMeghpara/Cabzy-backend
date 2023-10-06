@@ -7,21 +7,21 @@ const router = new express.Router()
 
 const upload = multer()
 
-//------------------------------------ Adding card details into database ------------------------------------ //
+//------------------------------------ Adding card details into stripe ------------------------------------ //
 
 router.post('/card/add', auth, upload.none(), cardController.add, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })
 
-//---------------------------------- Fetching users profile from database ---------------------------------- //
+//---------------------------------- Fetching users profile from stripe ---------------------------------- //
 
 router.post('/card', auth, upload.none(), cardController.fetchCards)
 
-//---------------------------------- Deleting card details from database ----------------------------------//
+//---------------------------------- Deleting card details from stripe ----------------------------------//
 
-router.delete('/card/delete', auth, upload.none(), cardController.deleteCard)
+router.post('/card/delete', auth, upload.none(), cardController.deleteCard)
 
-//---------------------------------- Deleting card details from database ----------------------------------//
+//---------------------------------- Change default card  ----------------------------------//
 
 router.post('/card/changeDefault', auth, upload.none(), cardController.changeDefaultCard)
 

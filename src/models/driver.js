@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 const validator = require("validator")
 
-const userSchema = new mongoose.Schema(
+const driverSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -44,12 +44,21 @@ const userSchema = new mongoose.Schema(
           throw new Error("Enter a valid phone number")
       },
     },
-    cards: {
-      type: Array
-    },
-    stripeID: {
+
+    city: {
       type: String,
-      trim: true
+      required: true,
+      trim: true,
+    },
+
+    serviceType: {
+      type: String,
+      trim: true,
+    },
+
+    isApproved: {
+      type: Boolean,
+      default: false,
     }
   },
   {
@@ -57,4 +66,4 @@ const userSchema = new mongoose.Schema(
   }
 )
 
-module.exports = mongoose.model("User", userSchema)
+module.exports = mongoose.model("Driver", driverSchema)
