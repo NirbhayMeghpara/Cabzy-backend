@@ -1,16 +1,13 @@
 const mongoose = require('mongoose');
-const Card = require('../models/card')
 const User = require('../models/user')
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 async function add(req, res) {
   try {
-    // const { cardHolderName, cardNumber, expiryDate, cvv } = req.body
     const token = req.body.token
     const owner = new mongoose.Types.ObjectId(req.body.id);
 
-    // const [expiryMonth, expiryYear] = expiryDate.split("/");
     let userStripeID
     const user = await User.findById(owner)
     if (!user.stripeID) {
@@ -29,27 +26,13 @@ async function add(req, res) {
     }
 
     userStripeID = user.stripeID
-    const source = await stripe.customers.createSource(userStripeID, {
-      source: token
-    })
-
+    const source = await stripe.customers.createSource(userStripeID, { source: token })
     if (!source) {
       res.status(500).send({ error: "Card not added to Stripe customer" });
       return
     }
+
     user.cards.push(source.id)
-    // const cardDetails = {
-    //   owner,
-    //   cardHolderName,
-    //   cardNumber,
-    //   expiryDate,
-    //   cvv,
-    // }
-    // const card = new Card(cardDetails)
-
-
-    // await card.save()
-
     await user.save()
     res.status(201).send({ msg: `Card added successfully` })
   } catch (error) {
@@ -62,11 +45,10 @@ async function fetchCards(req, res) {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please enter a valid data")
     }
-
     const userID = new mongoose.Types.ObjectId(req.body.id);
-    const user = await User.findById(userID)
 
-    if (!user.stripeID) {
+    const user = await User.findById(userID)
+    if (!user.cards.length) {
       res.status(404).send({ error: 'No card available. Please add card' })
       return
     }
@@ -85,13 +67,12 @@ async function deleteCard(req, res) {
     const userID = new mongoose.Types.ObjectId(req.body.userID);
 
     const user = await User.findById(userID)
-
     if (!(user.stripeID && user.cards.includes(cardID))) {
       res.status(400).send({ error: 'Unauthorized Card Access' })
       return
     }
-    const response = await stripe.customers.deleteSource(user.stripeID, cardID)
 
+    const response = await stripe.customers.deleteSource(user.stripeID, cardID)
     if (!response.deleted) {
       res.status(500).send({ error: "Error occured while deleting card !!" })
       return
@@ -100,38 +81,6 @@ async function deleteCard(req, res) {
     user.cards = user.cards.filter(id => id.toString() !== cardID.toString());
     await user.save()
     res.send({ msg: `Card deleted successfully :(` })
-
-    // const pipeline = [
-    //   {
-    //     $match: {
-    //       owner: ownerID
-    //     }
-    //   },
-    //   {
-    //     $facet: {
-    //       data: [{ $count: "cardCount" }],
-    //       card: [{ $match: { _id: cardID } }],
-    //       cards: [{ $match: { _id: { $ne: cardID }, owner: ownerID } }]
-    //     },
-    //   }
-    // ];
-
-    // const result = await Card.aggregate(pipeline)
-
-    // if (result[0].card.length === 0) {
-    //   res.status(400).send({ msg: "Unauthorized card access" })
-    //   return
-    // }
-
-    // const user = await User.findById(ownerID)
-
-    // if (result[0].data[0].cardCount === 1) {
-    //   user.defaultCard = ''
-    // } else {
-    //   user.defaultCard = result[0].cards[0]._id
-    // }
-
-    // await Card.findByIdAndDelete(cardID);
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
@@ -146,18 +95,20 @@ async function changeDefaultCard(req, res) {
     const userID = new mongoose.Types.ObjectId(req.body.userID);
 
     const user = await User.findById(userID)
-
     if (!(user.stripeID && user.cards.includes(newCardID))) {
       res.status(400).send({ error: 'Unauthorized Card Access' })
       return
     }
 
     const response = await stripe.customers.update(user.stripeID, { default_source: newCardID })
-    console.log(response)
+    if (!response) {
+      res.status(500).send({ error: "Error occured while updating card as default !!" })
+      return
+    }
+
     res.send({ msg: `Default card updated successfully` })
-
   } catch (error) {
-
+    res.status(500).send({ error: error.message })
   }
 }
 

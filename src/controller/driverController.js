@@ -1,32 +1,31 @@
 const mongoose = require('mongoose')
-const User = require('../models/user')
+const Driver = require('../models/driver')
 const path = require('path')
 const fs = require('fs')
-require('dotenv').config()
-const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
 
 async function add(req, res) {
   try {
-    const { name, email, phoneCode, phone } = req.body
+    const { name, email, phoneCode, phone, city } = req.body
     if (!req.file) throw new Error("Profile image is required")
 
-    const userData = {
+    const driverData = {
       name: capitalizeFirstLetter(name),
-      profile: 'user/' + req.file.filename,
+      profile: 'driver/' + req.file.filename,
       email,
       phoneCode,
       phone,
+      city: capitalizeFirstLetter(city)
     }
 
-    const user = new User(userData)
-    await user.save()
-    res.status(201).send({ msg: `Welcome ${user.name}, User added successfully` })
+    const driver = new Driver(driverData)
+    await driver.save()
+    res.status(201).send({ msg: `Welcome ${driver.name}, Driver added successfully` })
   } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
-      fs.unlinkSync(`${uploadPath}/user/${req.file.filename}`)
+      fs.unlinkSync(`${uploadPath}/driver/${req.file.filename}`)
     }
 
     switch (true) {
@@ -81,23 +80,23 @@ async function fetch(req, res) {
 
     pipeline.push({
       $facet: {
-        data: [{ $count: "userCount" }],
-        users: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
+        data: [{ $count: "driverCount" }],
+        drivers: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
       },
     })
 
-    const result = await User.aggregate(pipeline)
+    const result = await Driver.aggregate(pipeline)
 
-    if (!result[0].users.length) {
-      res.status(404).send({ msg: `No users found !!` })
+    if (!result[0].drivers.length) {
+      res.status(404).send({ msg: `No drivers found !!` })
       return
     }
 
-    const userCount = result[0].data[0].userCount
-    const pageCount = Math.ceil(userCount / limit)
-    const users = result[0].users
+    const driverCount = result[0].data[0].driverCount
+    const pageCount = Math.ceil(driverCount / limit)
+    const drivers = result[0].drivers
 
-    res.send({ userCount, pageCount, users })
+    res.send({ driverCount, pageCount, drivers })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
@@ -110,39 +109,32 @@ async function edit(req, res) {
     req.body = remaining;
 
     const _id = new mongoose.Types.ObjectId(id);
-    const user = await User.findById(_id)
+    const driver = await Driver.findById(_id)
 
-    if (!user) {
-      res.status(404).send({ msg: `No such user found !!` })
+    if (!driver) {
+      res.status(404).send({ msg: `No such driver found !!` })
       return
     }
-    const oldImage = user.profile
-
-    if (user.stripeID) {
-      const customer = await stripe.customers.update(user.stripeID, { name: req.body.name, email: req.body.email, phone: req.body.phone });
-      if (!customer) {
-        res.status(500).send({ error: "Error occured while updating user with stripe !!" })
-        return
-      }
-    }
+    const oldImage = driver.profile
 
     const updates = Object.keys(req.body)
     updates.forEach((update) => {
-      user[update] = req.body[update]
+      driver[update] = req.body[update]
     })
 
-    user.name = capitalizeFirstLetter(req.body.name)
-    user.profile = 'user/' + req.file.filename
-    await user.save()
+    driver.name = capitalizeFirstLetter(req.body.name)
+    driver.city = capitalizeFirstLetter(req.body.city)
+    driver.profile = 'driver/' + req.file.filename
+    await driver.save()
 
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${oldImage}`)
 
-    res.status(200).send({ msg: `User edited successfully !!` })
+    res.status(200).send({ msg: `Driver edited successfully !!` })
   } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
-      fs.unlinkSync(`${uploadPath}/user/${req.file.filename}`)
+      fs.unlinkSync(`${uploadPath}/driver/${req.file.filename}`)
     }
 
     switch (true) {
@@ -162,64 +154,92 @@ async function edit(req, res) {
   }
 }
 
-async function deleteUser(req, res) {
+async function deleteDriver(req, res) {
   try {
     const _id = new mongoose.Types.ObjectId(req.params.id);
-    const user = await User.findById(_id)
-    if (!user) {
-      res.status(404).send({ msg: `No such user found !!` })
+    const driver = await Driver.findById(_id)
+    if (!driver) {
+      res.status(404).send({ msg: `No such driver found !!` })
       return
     }
 
     const uploadPath = path.join(__dirname, "../../uploads")
-    fs.unlinkSync(`${uploadPath}/${user.profile}`)
+    fs.unlinkSync(`${uploadPath}/${driver.profile}`)
 
-    if (user.stripeID) {
-      const response = await stripe.customers.del(user.stripeID);
-      if (!response.deleted) {
-        res.status(500).send({ error: "Error occured while deleting user from stripe !!" })
-        return
-      }
-    }
-
-    const deletedUser = await User.findByIdAndDelete(_id);
-    res.send({ msg: `${deletedUser.name} deleted successfully :(` })
+    const deletedDriver = await Driver.findByIdAndDelete(_id);
+    res.send({ msg: `${deletedDriver.name} deleted successfully :(` })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
 }
 
-//---------------------- Stripe setup intent ----------------------//
-
-async function setupIntent(req, res) {
+async function changeDriverStatus(req, res) {
   try {
     const _id = new mongoose.Types.ObjectId(req.body.id);
-
-    const user = await User.findById(_id)
-    if (!user.stripeID) {
-      const customer = await stripe.customers.create({
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      });
-
-      if (!customer) {
-        res.status(500).send({ error: "User not created successfully in stripe" })
-        return
-      }
-      user.stripeID = customer.id
+    const driver = await Driver.findById(_id)
+    if (!driver) {
+      res.status(404).send({ msg: `No such driver found !!` })
+      return
     }
 
-    const setupIntent = await stripe.setupIntents.create({
-      customer: user.stripeID,
-      automatic_payment_methods: { enabled: true },
-    });
+    const status = req.body.status.toLowerCase()
 
-    await user.save()
-    res.send({ clientSecret: setupIntent.client_secret })
+    if (status === 'true') {
+      driver.isApproved = true;
+    } else if (status === 'false') {
+      driver.isApproved = false;
+    } else {
+      res.status(400).send({ error: "Invalid driver status !!" })
+    }
+
+    await driver.save()
+    res.send({ msg: `${driver.name} status is now ${driver.isApproved ? 'approved :)' : 'declined :('}` }
+    )
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
 }
 
-module.exports = { add, fetch, edit, deleteUser, setupIntent }
+async function setServiceType(req, res) {
+  try {
+    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const driver = await Driver.findById(_id)
+    if (!driver) {
+      res.status(404).send({ msg: `No such driver found !!` })
+      return
+    }
+
+    const serviceType = capitalizeFirstLetter(req.body.serviceType)
+    driver.serviceType = serviceType
+
+    await driver.save()
+    res.send({ msg: `${serviceType} is assigned to ${driver.name}` }
+    )
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
+async function removeServiceType(req, res) {
+  try {
+    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const driver = await Driver.findById(_id)
+    if (!driver) {
+      res.status(404).send({ msg: `No such driver found !!` })
+      return
+    }
+    if (!driver.serviceType) {
+      res.status(400).send({ error: `There is no service type assigned to ${driver.name}` })
+      return
+    }
+    const serviceType = driver.serviceType
+    driver.set({ serviceType: undefined });
+
+    await driver.save()
+    res.send({ msg: `${serviceType} is unassigned from ${driver.name}` })
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
+module.exports = { add, fetch, edit, deleteDriver, changeDriverStatus, setServiceType, removeServiceType }
