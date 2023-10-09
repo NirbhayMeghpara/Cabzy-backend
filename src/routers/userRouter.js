@@ -41,6 +41,10 @@ router.post('/user/add', auth, upload.single("profile"), userController.add, (er
 
 router.get('/user', auth, userController.fetch)
 
+//---------------------------------- Fetching users profile from database ---------------------------------- //
+
+router.post('/user/phone', auth, upload.none(), userController.fetchUserByPhone)
+
 //--------------------------------- Updating user profile and saving to database --------------------------------- //
 
 router.patch('/user/edit', auth, upload.single("profile"), userController.edit, (err, req, res, next) => {
