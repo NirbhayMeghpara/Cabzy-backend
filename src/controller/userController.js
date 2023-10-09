@@ -103,6 +103,24 @@ async function fetch(req, res) {
   }
 }
 
+async function fetchUserByPhone(req, res) {
+  try {
+    const phoneCode = req.body.phoneCode
+    const phone = req.body.phone
+
+    const user = await User.findOne({ phoneCode, phone });
+
+    if (!user) {
+      res.status(404).send({ msg: 'No user found !' })
+      return
+    }
+
+    res.send(user)
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function edit(req, res) {
   try {
     if (!req.file) throw new Error("Profile image is required")
@@ -222,4 +240,4 @@ async function setupIntent(req, res) {
   }
 }
 
-module.exports = { add, fetch, edit, deleteUser, setupIntent }
+module.exports = { add, fetch, edit, deleteUser, fetchUserByPhone, setupIntent }
