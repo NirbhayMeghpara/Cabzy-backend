@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose")
 const City = require("../models/city")
 
 async function add(req, res) {
@@ -9,7 +9,12 @@ async function add(req, res) {
     const places = req.body.location.split(",")
     const cityName = places[0].trim()
 
-    const city = await City({ name: cityName, ...req.body })
+    const city = await City({
+      name: cityName,
+      country: req.body.country,
+      location: req.body.location,
+      coordinates: JSON.parse(req.body.coordinates),
+    })
     await city.save()
     res.send({ msg: `${cityName} created successfully !!` })
   } catch (error) {
@@ -26,9 +31,9 @@ async function add(req, res) {
 
 async function fetchAllCity(req, res) {
   try {
-    const country = decodeURIComponent(req.params.country).toLowerCase();
+    const country = decodeURIComponent(req.params.country).toLowerCase()
 
-    const cities = await City.aggregate([{ $match: { country } }]);
+    const cities = await City.aggregate([{ $match: { country } }])
     if (!cities.length) {
       res.status(404).send({ msg: "No City Available" })
       return
@@ -41,26 +46,21 @@ async function fetchAllCity(req, res) {
 
 async function fetchCity(req, res) {
   try {
-    const country = decodeURIComponent(req.params.country).toLowerCase();
-    const page = parseInt(req.query.page) || 1;
-    const limit = 4;
+    const country = decodeURIComponent(req.params.country).toLowerCase()
+    const page = parseInt(req.query.page) || 1
+    const limit = 4
 
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit
 
     const result = await City.aggregate([
       { $match: { country } },
       {
         $facet: {
-          data: [
-            { $count: 'totalCities' }
-          ],
-          cities: [
-            { $skip: skip },
-            { $limit: limit }
-          ]
-        }
-      }
-    ]);
+          data: [{ $count: "totalCities" }],
+          cities: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ])
 
     if (!result[0].cities.length) {
       res.status(404).send({ msg: "No City Available" })
@@ -81,13 +81,20 @@ async function edit(req, res) {
       throw new Error("Please provide valid input")
     }
 
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const city = await City.findById(_id)
     if (!city) {
       res.status(404).send({ msg: "No such city found !!" })
       return
     }
-    city.coordinates = req.body.coordinates
+
+    // const arrayOfObjects = JSON.parse(req.body.coordinates)
+
+    // let arrayOfArrays = [arrayOfObjects.map(obj => Object.entries(obj))];
+
+    // arrayOfArrays = [...arrayOfArrays, arrayOfArrays[0]]
+
+    city.coordinates = JSON.parse(req.body.coordinates)
     await city.save()
     res.send({ msg: `${city.name} edited successfully` })
   } catch (error) {
@@ -95,4 +102,27 @@ async function edit(req, res) {
   }
 }
 
-module.exports = { add, fetchAllCity, fetchCity, edit }
+async function findCity(req, res) {
+  try {
+    const lat = parseFloat(req.body.lat)
+    const lng = parseFloat(req.body.lng)
+
+    const result = await City.find({
+      coordinates: {
+        $geoIntersects: {
+          $geometry: {
+            type: "Point",
+            coordinates: [lng, lat],
+          },
+        },
+      },
+    })
+
+    res.send({ cities: result })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message })
+  }
+}
+
+module.exports = { add, fetchAllCity, fetchCity, edit, findCity }
