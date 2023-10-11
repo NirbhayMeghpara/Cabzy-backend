@@ -19,4 +19,7 @@ router.get('/city/fetch/:country', auth, cityController.fetchCity)
 // ----------------------------  Updating city to database  ---------------------------- // 
 router.patch('/city/edit', auth, upload.none(), cityController.edit)
 
+// ----------------------------  Checking coordinate lies in zone  ---------------------------- // 
+router.post('/city/check', auth, upload.none(), cityController.findCity)
+
 module.exports = router
