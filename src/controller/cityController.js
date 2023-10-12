@@ -9,11 +9,23 @@ async function add(req, res) {
     const places = req.body.location.split(",")
     const cityName = places[0].trim()
 
+    const arrayOfObjects = JSON.parse(req.body.coordinates)
+    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat]);
+
+    // Add the first point as the last point to close the polygon
+    linearRing.push(linearRing[0]);
+
+    // Create a GeoJSON Polygon
+    const coordinates = {
+      type: 'Polygon',
+      coordinates: [linearRing]
+    };
+
     const city = await City({
       name: cityName,
       country: req.body.country,
       location: req.body.location,
-      coordinates: JSON.parse(req.body.coordinates),
+      coordinates
     })
     await city.save()
     res.send({ msg: `${cityName} created successfully !!` })
@@ -66,11 +78,24 @@ async function fetchCity(req, res) {
       res.status(404).send({ msg: "No City Available" })
       return
     }
+
+    const convertedCities = result[0].cities.map(city => {
+      // City has coordinates in GeoJSON Polygon format
+      console.log("City", city)
+      console.log("Coord", city.coordinates)
+      const arrayOfObjects = city.coordinates.coordinates[0].map(coord => ({
+        lat: coord[1],
+        lng: coord[0]
+      }));
+      return { ...city, coordinates: arrayOfObjects };
+    })
+
     const cityCount = result[0].data[0].totalCities
-    const cities = result[0].cities
+    const cities = convertedCities
 
     res.send({ cityCount, cities })
   } catch (error) {
+    console.log(error)
     res.status(500).send({ error: error.message })
   }
 }
@@ -88,13 +113,20 @@ async function edit(req, res) {
       return
     }
 
-    // const arrayOfObjects = JSON.parse(req.body.coordinates)
+    const arrayOfObjects = JSON.parse(req.body.coordinates)
+    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat]);
 
-    // let arrayOfArrays = [arrayOfObjects.map(obj => Object.entries(obj))];
+    // Add the first point as the last point to close the polygon
+    linearRing.push(linearRing[0]);
 
-    // arrayOfArrays = [...arrayOfArrays, arrayOfArrays[0]]
+    // Create a GeoJSON Polygon
+    const coordinates = {
+      type: 'Polygon',
+      coordinates: [linearRing]
+    };
 
-    city.coordinates = JSON.parse(req.body.coordinates)
+    // city.coordinates = JSON.parse(req.body.coordinates)
+    city.coordinates = coordinates
     await city.save()
     res.send({ msg: `${city.name} edited successfully` })
   } catch (error) {
