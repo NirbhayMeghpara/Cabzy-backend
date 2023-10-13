@@ -110,7 +110,6 @@ async function editPrice(req, res) {
     await vehiclePricing.save()
     res.send({ msg: `${vehiclePricing.vehicleType} edited successfully` })
   } catch (error) {
-    console.log(error)
     if (error.errors.driverProfit) {
       return res.status(400).send({ error: error.errors.driverProfit.properties.message });
     }
