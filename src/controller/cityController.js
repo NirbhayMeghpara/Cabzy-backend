@@ -81,8 +81,6 @@ async function fetchCity(req, res) {
 
     const convertedCities = result[0].cities.map(city => {
       // City has coordinates in GeoJSON Polygon format
-      console.log("City", city)
-      console.log("Coord", city.coordinates)
       const arrayOfObjects = city.coordinates.coordinates[0].map(coord => ({
         lat: coord[1],
         lng: coord[0]
@@ -95,7 +93,6 @@ async function fetchCity(req, res) {
 
     res.send({ cityCount, cities })
   } catch (error) {
-    console.log(error)
     res.status(500).send({ error: error.message })
   }
 }
@@ -150,7 +147,7 @@ async function findCity(req, res) {
       },
     })
 
-    res.send({ cities: result })
+    res.send(result)
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: error.message })
