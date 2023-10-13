@@ -1,0 +1,75 @@
+const mongoose = require("mongoose")
+const User = require("../models/user")
+const City = require("../models/city")
+const VehicleType = require("../models/vehicleType")
+
+const createRideSchema = new mongoose.Schema(
+  {
+    userID: {
+      type: mongoose.Types.ObjectId,
+      ref: User,
+      required: true
+    },
+    cityID: {
+      type: mongoose.Types.ObjectId,
+      ref: City,
+      required: true
+    },
+    serviceTypeID: {
+      type: mongoose.Types.ObjectId,
+      ref: VehicleType,
+      required: true
+    },
+    userName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    pickUp: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    stops: {
+      type: Array,
+      required: true
+    },
+    dropOff: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    journeyDistance: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    journeyTime: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    totalFare: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    rideDate: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    rideTime: {
+      type: String,
+      required: true,
+      trim: true,
+    }
+  },
+  {
+    timestamps: true,
+  }
+)
+
+const CreateRide = mongoose.model("CreateRide", createRideSchema)
+
+module.exports = CreateRide
