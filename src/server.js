@@ -8,6 +8,7 @@ const settingRouter = require('./routers/settingRouter')
 const userRouter = require('./routers/userRouter')
 const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
+const createRideRouter = require('./routers/createRideRouter')
 
 const cors = require('cors')
 const path = require("path")
@@ -33,6 +34,7 @@ app.use(settingRouter)
 app.use(userRouter)
 app.use(cardRouter)
 app.use(driverRouter)
+app.use(createRideRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)

@@ -66,4 +66,6 @@ const driverSchema = new mongoose.Schema(
   }
 )
 
-module.exports = mongoose.model("Driver", driverSchema)
+const Driver = mongoose.model("Driver", driverSchema)
+
+module.exports = Driver
