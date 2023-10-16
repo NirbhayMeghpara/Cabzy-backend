@@ -13,7 +13,7 @@ router.post('/ride/create', auth, upload.none(), createRideController.create)
 
 //---------------------------------- Fetching ride from database ---------------------------------- //
 
-router.get('/rides', auth, createRideController.fetch)
+router.get('/ride', auth, createRideController.fetch)
 
 //---------------------------------- Deleting ride data from database ----------------------------------//
 

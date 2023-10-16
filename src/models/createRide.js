@@ -54,6 +54,10 @@ const createRideSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    paymentType: {
+      type: String,
+      default: "cash"
+    },
     rideDate: {
       type: String,
       required: true,
