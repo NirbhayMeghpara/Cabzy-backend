@@ -3,49 +3,18 @@ const CreateRide = require('../models/createRide')
 
 async function create(req, res) {
   try {
-    const { name, email, phoneCode, phone, city } = req.body
-    if (!req.file) throw new Error("Profile image is required")
-
-    const driverData = {
-      name: capitalizeFirstLetter(name),
-      profile: 'driver/' + req.file.filename,
-      email,
-      phoneCode,
-      phone,
-      city: capitalizeFirstLetter(city)
+    if (Object.keys(req.body).length === 0) {
+      throw new Error("Please enter a valid city")
     }
+    req.body.stops = JSON.parse(req.body.stops)
 
-    const driver = new Driver(driverData)
-    await driver.save()
-    res.status(201).send({ msg: `Welcome ${driver.name}, Driver added successfully` })
+    const ride = new CreateRide(req.body)
+    if (!ride) throw new Error("Something went wrong. Please try again !")
+
+    await ride.save()
+    res.send({ msg: `Ride is created successfully !!` })
   } catch (error) {
-    if (req.file) {
-      const uploadPath = path.join(__dirname, "../../uploads")
-      fs.unlinkSync(`${uploadPath}/driver/${req.file.filename}`)
-    }
-
-    switch (true) {
-      case !!(error.keyPattern && error.keyPattern.email):
-        return res.status(403).send({
-          field: "email",
-          msg: "Email is already registered",
-        });
-      case !!(error.keyPattern && error.keyPattern.phone):
-        return res.status(403).send({
-          field: "phone",
-          msg: "Phone number is already registered",
-        });
-      case !!(error.errors && error.errors.name):
-        return res.status(400).send({ error: error.errors.name.properties.message });
-      case !!(error.errors && error.errors.email):
-        return res.status(400).send({ error: error.errors.email.properties.message });
-      case !!(error.errors && error.errors.phoneCode):
-        return res.status(400).send({ error: error.errors.phoneCode.properties.message });
-      case !!(error.errors && error.errors.phone):
-        return res.status(400).send({ error: error.errors.phone.properties.message });
-      default:
-        res.status(500).send({ error: error.message })
-    }
+    res.status(500).send({ error: error.message })
   }
 }
 
@@ -76,23 +45,23 @@ async function fetch(req, res) {
 
     pipeline.push({
       $facet: {
-        data: [{ $count: "driverCount" }],
-        drivers: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
+        data: [{ $count: "rideCount" }],
+        rides: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
       },
     })
 
-    const result = await Driver.aggregate(pipeline)
+    const result = await CreateRide.aggregate(pipeline)
 
-    if (!result[0].drivers.length) {
-      res.status(404).send({ msg: `No drivers found !!` })
+    if (!result[0].rides.length) {
+      res.status(404).send({ msg: `No rides found !!` })
       return
     }
 
-    const driverCount = result[0].data[0].driverCount
-    const pageCount = Math.ceil(driverCount / limit)
-    const drivers = result[0].drivers
+    const rideCount = result[0].data[0].rideCount
+    const pageCount = Math.ceil(rideCount / limit)
+    const rides = result[0].rides
 
-    res.send({ driverCount, pageCount, drivers })
+    res.send({ rideCount, pageCount, rides })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
