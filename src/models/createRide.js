@@ -20,6 +20,10 @@ const createRideSchema = new mongoose.Schema(
       ref: VehicleType,
       required: true
     },
+    rideID: {
+      type: Number,
+      unique: true
+    },
     userName: {
       type: String,
       required: true,
@@ -67,6 +71,10 @@ const createRideSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    status: {
+      type: Number,
+      default: 1
     }
   },
   {

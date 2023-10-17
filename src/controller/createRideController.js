@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const CreateRide = require('../models/createRide')
+const Counter = require('../models/counter')
 
 async function create(req, res) {
   try {
@@ -7,6 +8,7 @@ async function create(req, res) {
       throw new Error("Please enter a valid city")
     }
     req.body.stops = JSON.parse(req.body.stops)
+    req.body.rideID = await getNextSequenceValue('ride_id')
 
     const ride = new CreateRide(req.body)
     if (!ride) throw new Error("Something went wrong. Please try again !")
@@ -28,11 +30,39 @@ async function fetch(req, res) {
 
     const pipeline = []
 
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "userID",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: "$user"
+      }
+    )
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "vehicleprices",
+          localField: "serviceTypeID",
+          foreignField: "_id",
+          as: "serviceType"
+        }
+      },
+      {
+        $unwind: "$serviceType"
+      }
+    )
+
     if (searchValue) {
       const regex = new RegExp(searchValue, "i")
       pipeline.push({
         $match: {
-          $or: [{ name: regex }, { email: regex }, { phoneCode: regex }, { phone: regex }],
+          $or: [{ userName: regex }, { rideID: regex }, { "user.phone": regex }],
         },
       })
     }
@@ -41,7 +71,8 @@ async function fetch(req, res) {
       $sort: {
         [sortBy]: sortOrder,
       },
-    });
+    })
+
 
     pipeline.push({
       $facet: {
@@ -49,6 +80,7 @@ async function fetch(req, res) {
         rides: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
       },
     })
+
 
     const result = await CreateRide.aggregate(pipeline)
 
@@ -85,5 +117,15 @@ async function deleteRide(req, res) {
     res.status(500).send({ error: error.message })
   }
 }
+
+async function getNextSequenceValue(sequenceName) {
+  const counter = await Counter.findOneAndUpdate(
+    { _id: sequenceName },
+    { $inc: { sequence_value: 1 } },
+    { new: true, upsert: true }
+  );
+  return counter.sequence_value;
+}
+
 
 module.exports = { create, fetch, deleteRide }
