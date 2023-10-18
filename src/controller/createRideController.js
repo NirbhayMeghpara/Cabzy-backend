@@ -58,6 +58,37 @@ async function fetch(req, res) {
       }
     )
 
+    const filter = [];
+
+    const rideDate = req.query.rideDate ? req.query.rideDate.trim() : null
+    if (rideDate) {
+      filter.push({
+        rideDate: rideDate
+      });
+    }
+
+    const vehicleType = req.query.vehicleType ? req.query.vehicleType.trim() : null
+    if (vehicleType) {
+      filter.push({
+        "serviceType.vehicleType": vehicleType,
+      });
+    }
+
+    const status = req.query.status ? parseInt(req.query.status.trim()) : null
+    if (status) {
+      filter.push({
+        status: status,
+      });
+    }
+
+    if (filter.length > 0) {
+      pipeline.push({
+        $match: {
+          $and: filter,
+        },
+      });
+    }
+
     if (searchValue) {
       const regex = new RegExp(searchValue, "i")
       pipeline.push({
