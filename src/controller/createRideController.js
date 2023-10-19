@@ -47,6 +47,20 @@ async function fetch(req, res) {
     pipeline.push(
       {
         $lookup: {
+          from: "cities",
+          localField: "cityID",
+          foreignField: "_id",
+          as: "city"
+        }
+      },
+      {
+        $unwind: "$city"
+      }
+    )
+
+    pipeline.push(
+      {
+        $lookup: {
           from: "vehicleprices",
           localField: "serviceTypeID",
           foreignField: "_id",
@@ -159,4 +173,4 @@ async function getNextSequenceValue(sequenceName) {
 }
 
 
-module.exports = { create, fetch, deleteRide }
+module.exports = { create, fetch, deleteRide, getNextSequenceValue }
