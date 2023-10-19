@@ -37,6 +37,10 @@ router.post('/driver/add', auth, upload.single("profile"), driverController.add,
   res.status(400).send({ error: err.message })
 })
 
+//---------------------------------- Fetching drivers by zone from database ---------------------------------- //
+
+router.get('/driver/:country', auth, driverController.fetch)
+
 //---------------------------------- Fetching drivers profile from database ---------------------------------- //
 
 router.get('/driver', auth, driverController.fetch)

@@ -11,12 +11,14 @@ const driverSchema = new mongoose.Schema(
         if (!/^[a-zA-Z\s'-]+$/.test(value)) throw new Error("Please enter your name properly")
       },
     },
-
     profile: {
       type: String,
       required: true,
     },
-
+    driverID: {
+      type: Number,
+      unique: true
+    },
     email: {
       type: String,
       unique: true,
@@ -27,13 +29,11 @@ const driverSchema = new mongoose.Schema(
         if (!validator.isEmail(value)) throw new Error("Entered email is invalid")
       },
     },
-
     phoneCode: {
       type: String,
       trim: true,
       required: true,
     },
-
     phone: {
       type: String,
       unique: true,
@@ -44,18 +44,15 @@ const driverSchema = new mongoose.Schema(
           throw new Error("Enter a valid phone number")
       },
     },
-
     city: {
       type: String,
       required: true,
       trim: true,
     },
-
     serviceType: {
       type: String,
       trim: true,
     },
-
     isApproved: {
       type: Boolean,
       default: false,

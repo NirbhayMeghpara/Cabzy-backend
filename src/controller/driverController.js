@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
+const { getNextSequenceValue } = require('./createRideController')
 
 async function add(req, res) {
   try {
@@ -11,6 +12,7 @@ async function add(req, res) {
     if (!req.file) throw new Error("Profile image is required")
 
     const driverData = {
+      driverID: await getNextSequenceValue('driver_id'),
       name: capitalizeFirstLetter(name),
       profile: 'driver/' + req.file.filename,
       email,
@@ -50,6 +52,20 @@ async function add(req, res) {
       default:
         res.status(500).send({ error: error.message })
     }
+  }
+}
+
+async function fetchByCity(req, res) {
+  try {
+
+    const drivers = await Driver.find({})
+    if (!drivers.length) {
+      res.status(404).send({ msg: `No drivers found !!` })
+      return
+    }
+    res.send(drivers)
+  } catch (error) {
+    res.status(500).send({ error: error.message })
   }
 }
 
@@ -242,4 +258,4 @@ async function removeServiceType(req, res) {
   }
 }
 
-module.exports = { add, fetch, edit, deleteDriver, changeDriverStatus, setServiceType, removeServiceType }
+module.exports = { add, fetchByCity, fetch, edit, deleteDriver, changeDriverStatus, setServiceType, removeServiceType }
