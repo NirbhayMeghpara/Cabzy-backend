@@ -156,7 +156,7 @@ async function edit(req, res) {
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${oldImage}`)
 
-    res.status(200).send({ msg: `User edited successfully !!` })
+    res.status(200).send(user)
   } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
