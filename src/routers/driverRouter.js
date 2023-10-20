@@ -39,7 +39,7 @@ router.post('/driver/add', auth, upload.single("profile"), driverController.add,
 
 //---------------------------------- Fetching drivers by zone from database ---------------------------------- //
 
-router.get('/driver/:country', auth, driverController.fetch)
+router.get('/driver/ride', auth, driverController.fetchRideDriver)
 
 //---------------------------------- Fetching drivers profile from database ---------------------------------- //
 

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose")
 const validator = require("validator")
+const City = require("./city")
+const VehiclePrice = require("./vehiclePrice")
 
 const driverSchema = new mongoose.Schema(
   {
@@ -44,14 +46,14 @@ const driverSchema = new mongoose.Schema(
           throw new Error("Enter a valid phone number")
       },
     },
-    city: {
-      type: String,
-      required: true,
-      trim: true,
+    cityID: {
+      type: mongoose.Types.ObjectId,
+      ref: City,
+      required: true
     },
-    serviceType: {
-      type: String,
-      trim: true,
+    serviceTypeID: {
+      type: mongoose.Types.ObjectId,
+      ref: VehiclePrice,
     },
     isApproved: {
       type: Boolean,

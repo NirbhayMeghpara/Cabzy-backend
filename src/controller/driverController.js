@@ -5,10 +5,11 @@ const fs = require('fs')
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
 const { getNextSequenceValue } = require('./createRideController')
+const { CLIENT_RENEG_LIMIT } = require('tls')
 
 async function add(req, res) {
   try {
-    const { name, email, phoneCode, phone, city } = req.body
+    const { name, email, phoneCode, phone, cityID } = req.body
     if (!req.file) throw new Error("Profile image is required")
 
     const driverData = {
@@ -18,7 +19,7 @@ async function add(req, res) {
       email,
       phoneCode,
       phone,
-      city: capitalizeFirstLetter(city)
+      cityID: new mongoose.Types.ObjectId(cityID)
     }
 
     const driver = new Driver(driverData)
@@ -55,10 +56,22 @@ async function add(req, res) {
   }
 }
 
-async function fetchByCity(req, res) {
+async function fetchRideDriver(req, res) {
   try {
 
-    const drivers = await Driver.find({})
+    const pipeline = [{
+      $match: {
+        $and: [{
+          serviceTypeID: new mongoose.Types.ObjectId(req.query.serviceTypeID)
+        }, {
+          cityID: new mongoose.Types.ObjectId(req.query.cityID)
+        }, {
+          isApproved: true
+        }]
+      }
+    }]
+
+    const drivers = await Driver.aggregate(pipeline)
     if (!drivers.length) {
       res.status(404).send({ msg: `No drivers found !!` })
       return
@@ -78,6 +91,20 @@ async function fetch(req, res) {
     const sortOrder = req.query.sortOrder === "desc" ? -1 : 1 // Default is ascending order
 
     const pipeline = []
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "cities",
+          localField: "cityID",
+          foreignField: "_id",
+          as: "city"
+        }
+      },
+      {
+        $unwind: "$city"
+      }
+    )
 
     if (searchValue) {
       const regex = new RegExp(searchValue, "i")
@@ -138,15 +165,35 @@ async function edit(req, res) {
       driver[update] = req.body[update]
     })
 
+    driver.cityID = new mongoose.Types.ObjectId(req.body.cityID)
+
     driver.name = capitalizeFirstLetter(req.body.name)
-    driver.city = capitalizeFirstLetter(req.body.city)
     driver.profile = 'driver/' + req.file.filename
     await driver.save()
 
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${oldImage}`)
 
-    res.status(200).send({ msg: `Driver edited successfully !!` })
+    const pipeline = [
+      {
+        $match: { _id }
+      },
+      {
+        $lookup: {
+          from: "cities",
+          localField: "cityID",
+          foreignField: "_id",
+          as: "city"
+        }
+      },
+      {
+        $unwind: "$city"
+      }
+    ]
+
+    const result = await Driver.aggregate(pipeline)
+
+    res.status(200).send(result[0])
   } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
@@ -225,11 +272,10 @@ async function setServiceType(req, res) {
       return
     }
 
-    const serviceType = capitalizeFirstLetter(req.body.serviceType)
-    driver.serviceType = serviceType
+    driver.serviceTypeID = new mongoose.Types.ObjectId(req.body.serviceTypeID)
 
     await driver.save()
-    res.send({ msg: `${serviceType} is assigned to ${driver.name}` }
+    res.send({ msg: `Service Type is assigned to ${driver.name}` }
     )
   } catch (error) {
     res.status(500).send({ error: error.message })
@@ -244,18 +290,17 @@ async function removeServiceType(req, res) {
       res.status(404).send({ msg: `No such driver found !!` })
       return
     }
-    if (!driver.serviceType) {
+    if (!driver.serviceTypeID) {
       res.status(400).send({ error: `There is no service type assigned to ${driver.name}` })
       return
     }
-    const serviceType = driver.serviceType
-    driver.set({ serviceType: undefined });
+    driver.set({ serviceTypeID: undefined });
 
     await driver.save()
-    res.send({ msg: `${serviceType} is unassigned from ${driver.name}` })
+    res.send({ msg: `Service Type is unassigned from ${driver.name}` })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
 }
 
-module.exports = { add, fetchByCity, fetch, edit, deleteDriver, changeDriverStatus, setServiceType, removeServiceType }
+module.exports = { add, fetchRideDriver, fetch, edit, deleteDriver, changeDriverStatus, setServiceType, removeServiceType }
