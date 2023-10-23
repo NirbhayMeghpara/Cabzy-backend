@@ -58,6 +58,10 @@ const driverSchema = new mongoose.Schema(
     isApproved: {
       type: Boolean,
       default: false,
+    },
+    status: {
+      type: Number,
+      default: 0 // 0 for available and 1 for unavailable
     }
   },
   {
