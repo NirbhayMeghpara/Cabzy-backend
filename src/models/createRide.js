@@ -2,6 +2,7 @@ const mongoose = require("mongoose")
 const User = require("../models/user")
 const City = require("../models/city")
 const VehicleType = require("../models/vehicleType")
+const Driver = require("./driver")
 
 const createRideSchema = new mongoose.Schema(
   {
@@ -75,6 +76,19 @@ const createRideSchema = new mongoose.Schema(
     status: {
       type: Number,
       default: 1
+    },
+    driverID: {
+      type: mongoose.Types.ObjectId,
+      ref: Driver,
+    },
+    rejectedDriverID: {
+      type: Array,
+    },
+    timeoutDriverID: {
+      type: Array,
+    },
+    assignSelected: {
+      type: Boolean,
     }
   },
   {

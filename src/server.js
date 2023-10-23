@@ -8,6 +8,10 @@ const settingRouter = require('./routers/settingRouter')
 const userRouter = require('./routers/userRouter')
 const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
+const socketIo = require('socket.io')
+const http = require('http')
+const socketRouter = require("./routers/socket")
+
 const createRideRouter = require('./routers/createRideRouter')
 
 const cors = require('cors')
@@ -17,9 +21,17 @@ require('./db/mongoose')
 const port = process.env.PORT || 3000
 
 const app = express()
-
 app.use(express.json())
 app.use(cors())
+
+const server = http.createServer(app)
+const io = socketIo(server, {
+  cors: {
+    origin: "*"
+  }
+})
+
+socketRouter.handleSocket(io)
 
 const uploadPath = path.join(__dirname, "../uploads")
 app.use(express.static(uploadPath))
@@ -36,6 +48,6 @@ app.use(cardRouter)
 app.use(driverRouter)
 app.use(createRideRouter)
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)
 })
