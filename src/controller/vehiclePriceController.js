@@ -38,10 +38,8 @@ async function addPrice(req, res) {
 async function fetchAllPrice(req, res) {
   try {
     const city = capitalizeFirstLetter(decodeURIComponent(req.params.city))
-    console.log(city)
     const pricing = await VehiclePrice.aggregate([{ $match: { city } }]);
     if (!pricing.length) {
-      console.log(city)
       res.status(404).send({ msg: `No pricing available for ${city}` })
       return
     }

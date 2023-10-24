@@ -66,8 +66,10 @@ async function fetchRideDriver(req, res) {
         }, {
           cityID: new mongoose.Types.ObjectId(req.query.cityID)
         }, {
+          status: 0
+        }, {
           isApproved: true
-        }]
+        },]
       }
     }]
 

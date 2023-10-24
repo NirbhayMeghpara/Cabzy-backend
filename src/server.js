@@ -10,7 +10,7 @@ const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
 const socketIo = require('socket.io')
 const http = require('http')
-const socketRouter = require("./routers/socket")
+const socketController = require("./controller/socket")
 
 const createRideRouter = require('./routers/createRideRouter')
 
@@ -31,7 +31,7 @@ const io = socketIo(server, {
   }
 })
 
-socketRouter.handleSocket(io)
+socketController.handleSocket(io)
 
 const uploadPath = path.join(__dirname, "../uploads")
 app.use(express.static(uploadPath))
