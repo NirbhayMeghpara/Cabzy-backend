@@ -27,8 +27,17 @@ async function fetch(req, res) {
     const searchValue = req.query.search ? req.query.search.trim() : ""
     const sortBy = req.query.sort ? req.query.sort.trim() : "createdBy" // Default sorting field is 'createdBy'
     const sortOrder = req.query.sortOrder === "desc" ? -1 : 1 // Default is ascending order
+    const rideStatus = req.query.rideStatus ? JSON.parse(req.query.rideStatus) : null
 
     const pipeline = []
+
+    if (rideStatus) {
+      pipeline.push({
+        $match: {
+          status: { $in: rideStatus }
+        }
+      })
+    }
 
     pipeline.push(
       {
