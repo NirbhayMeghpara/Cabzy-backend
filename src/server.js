@@ -1,4 +1,6 @@
 const express = require('express')
+const http = require('http')
+const socketIo = require('socket.io')
 const adminRouter = require('./routers/adminRouter')
 const vehicleTypeRouter = require('./routers/vehicleTypeRouter')
 const countryRouter = require('./routers/countryRouter')
@@ -8,11 +10,9 @@ const settingRouter = require('./routers/settingRouter')
 const userRouter = require('./routers/userRouter')
 const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
-const socketIo = require('socket.io')
-const http = require('http')
-const socketController = require("./controller/socket")
-
 const createRideRouter = require('./routers/createRideRouter')
+const socketController = require("./controller/socket")
+const cron = require("node-cron")
 
 const cors = require('cors')
 const path = require("path")
@@ -50,4 +50,8 @@ app.use(createRideRouter)
 
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)
+
+  // cron.schedule('*/10 * * * * *', () => {
+  //   console.log('running a task every minute')
+  // })
 })
