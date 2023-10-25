@@ -81,6 +81,23 @@ async function fetch(req, res) {
       }
     )
 
+    pipeline.push(
+      {
+        $lookup: {
+          from: "drivers",
+          localField: "driverID",
+          foreignField: "_id",
+          as: "driver"
+        }
+      },
+      {
+        $unwind: {
+          path: "$driver",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    )
+
     const filter = [];
 
     const rideDate = req.query.rideDate ? req.query.rideDate.trim() : null

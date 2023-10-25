@@ -75,7 +75,7 @@ async function fetchRideDriver(req, res) {
 
     const drivers = await Driver.aggregate(pipeline)
     if (!drivers.length) {
-      res.status(404).send({ msg: `No drivers found !!` })
+      res.status(404).send({ msg: `No drivers available !!` })
       return
     }
     res.send(drivers)

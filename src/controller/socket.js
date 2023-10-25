@@ -46,11 +46,32 @@ async function handleSocket(io) {
 
         const pipeline = getPipeline(updatedRide._id)
         const rideData = await CreateRide.aggregate(pipeline)
-        console.log(rideData)
         if (rideData[0] && updatedDriver) {
           callback(null, JSON.stringify(rideData[0]))
         }
-        callback("Error occured while assigning driver", null)
+        callback("Error occured while accepting a ride", null)
+
+      } catch (error) {
+        callback(error, null)
+      }
+    })
+
+    socket.on('selectedDriverRejectRide', async ({ ride }, callback) => {
+      try {
+        const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 1, assignSelected: undefined, driverID: undefined }, {
+          new: true,
+          runValidators: true,
+        })
+
+        const updatedDriver = await Driver.findByIdAndUpdate(updatedRide.driverID, { status: 0 }, {
+          new: true,
+          runValidators: true,
+        })
+
+        if (updatedRide && updatedDriver) {
+          callback(null, "Selected driver rejected a ride :( ")
+        }
+        callback("Error occured while rejecting a ride by driver", null)
 
       } catch (error) {
         callback(error, null)
@@ -58,9 +79,9 @@ async function handleSocket(io) {
     })
 
     socket.on('disconnect', () => {
-      console.log('User disconnected');
-    });
-  });
+      console.log('User disconnected')
+    })
+  })
 }
 
 function getPipeline(rideID) {
@@ -107,6 +128,23 @@ function getPipeline(rideID) {
     },
     {
       $unwind: "$serviceType"
+    }
+  )
+
+  pipeline.push(
+    {
+      $lookup: {
+        from: "drivers",
+        localField: "driverID",
+        foreignField: "_id",
+        as: "driver"
+      }
+    },
+    {
+      $unwind: {
+        path: "$driver",
+        preserveNullAndEmptyArrays: true
+      }
     }
   )
 
