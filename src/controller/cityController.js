@@ -10,16 +10,16 @@ async function add(req, res) {
     const cityName = places[0].trim()
 
     const arrayOfObjects = JSON.parse(req.body.coordinates)
-    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat]);
+    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat])
 
     // Add the first point as the last point to close the polygon
-    linearRing.push(linearRing[0]);
+    linearRing.push(linearRing[0])
 
     // Create a GeoJSON Polygon
     const coordinates = {
       type: 'Polygon',
       coordinates: [linearRing]
-    };
+    }
 
     const city = await City({
       name: cityName,
@@ -84,8 +84,8 @@ async function fetchCity(req, res) {
       const arrayOfObjects = city.coordinates.coordinates[0].map(coord => ({
         lat: coord[1],
         lng: coord[0]
-      }));
-      return { ...city, coordinates: arrayOfObjects };
+      }))
+      return { ...city, coordinates: arrayOfObjects }
     })
 
     const cityCount = result[0].data[0].totalCities
@@ -111,18 +111,17 @@ async function edit(req, res) {
     }
 
     const arrayOfObjects = JSON.parse(req.body.coordinates)
-    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat]);
+    const linearRing = arrayOfObjects.map(point => [point.lng, point.lat])
 
     // Add the first point as the last point to close the polygon
-    linearRing.push(linearRing[0]);
+    linearRing.push(linearRing[0])
 
     // Create a GeoJSON Polygon
     const coordinates = {
       type: 'Polygon',
       coordinates: [linearRing]
-    };
+    }
 
-    // city.coordinates = JSON.parse(req.body.coordinates)
     city.coordinates = coordinates
     await city.save()
     res.send({ msg: `${city.name} edited successfully` })

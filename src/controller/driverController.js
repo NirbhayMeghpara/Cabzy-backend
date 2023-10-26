@@ -36,20 +36,20 @@ async function add(req, res) {
         return res.status(403).send({
           field: "email",
           msg: "Email is already registered",
-        });
+        })
       case !!(error.keyPattern && error.keyPattern.phone):
         return res.status(403).send({
           field: "phone",
           msg: "Phone number is already registered",
-        });
+        })
       case !!(error.errors && error.errors.name):
-        return res.status(400).send({ error: error.errors.name.properties.message });
+        return res.status(400).send({ error: error.errors.name.properties.message })
       case !!(error.errors && error.errors.email):
-        return res.status(400).send({ error: error.errors.email.properties.message });
+        return res.status(400).send({ error: error.errors.email.properties.message })
       case !!(error.errors && error.errors.phoneCode):
-        return res.status(400).send({ error: error.errors.phoneCode.properties.message });
+        return res.status(400).send({ error: error.errors.phoneCode.properties.message })
       case !!(error.errors && error.errors.phone):
-        return res.status(400).send({ error: error.errors.phone.properties.message });
+        return res.status(400).send({ error: error.errors.phone.properties.message })
       default:
         res.status(500).send({ error: error.message })
     }
@@ -121,7 +121,7 @@ async function fetch(req, res) {
       $sort: {
         [sortBy]: sortOrder,
       },
-    });
+    })
 
     pipeline.push({
       $facet: {
@@ -150,10 +150,10 @@ async function fetch(req, res) {
 async function edit(req, res) {
   try {
     if (!req.file) throw new Error("Profile image is required")
-    const { id, ...remaining } = req.body;
-    req.body = remaining;
+    const { id, ...remaining } = req.body
+    req.body = remaining
 
-    const _id = new mongoose.Types.ObjectId(id);
+    const _id = new mongoose.Types.ObjectId(id)
     const driver = await Driver.findById(_id)
 
     if (!driver) {
@@ -207,12 +207,12 @@ async function edit(req, res) {
         return res.status(403).send({
           field: "email",
           message: "Email is already registered",
-        });
+        })
       case !!(error.keyPattern && error.keyPattern.phone):
         return res.status(403).send({
           field: "phone",
           message: "Phone number is already registered",
-        });
+        })
       default:
         res.status(500).send({ error: error.message })
     }
@@ -221,7 +221,7 @@ async function edit(req, res) {
 
 async function deleteDriver(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.params.id);
+    const _id = new mongoose.Types.ObjectId(req.params.id)
     const driver = await Driver.findById(_id)
     if (!driver) {
       res.status(404).send({ msg: `No such driver found !!` })
@@ -231,7 +231,7 @@ async function deleteDriver(req, res) {
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${driver.profile}`)
 
-    const deletedDriver = await Driver.findByIdAndDelete(_id);
+    const deletedDriver = await Driver.findByIdAndDelete(_id)
     res.send({ msg: `${deletedDriver.name} deleted successfully :(` })
   } catch (error) {
     res.status(500).send({ error: error.message })
@@ -240,7 +240,7 @@ async function deleteDriver(req, res) {
 
 async function changeDriverStatus(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const driver = await Driver.findById(_id)
     if (!driver) {
       res.status(404).send({ msg: `No such driver found !!` })
@@ -250,9 +250,9 @@ async function changeDriverStatus(req, res) {
     const status = req.body.status.toLowerCase()
 
     if (status === 'true') {
-      driver.isApproved = true;
+      driver.isApproved = true
     } else if (status === 'false') {
-      driver.isApproved = false;
+      driver.isApproved = false
     } else {
       res.status(400).send({ error: "Invalid driver status !!" })
     }
@@ -267,7 +267,7 @@ async function changeDriverStatus(req, res) {
 
 async function setServiceType(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const driver = await Driver.findById(_id)
     if (!driver) {
       res.status(404).send({ msg: `No such driver found !!` })
@@ -286,7 +286,7 @@ async function setServiceType(req, res) {
 
 async function removeServiceType(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const driver = await Driver.findById(_id)
     if (!driver) {
       res.status(404).send({ msg: `No such driver found !!` })
@@ -296,7 +296,7 @@ async function removeServiceType(req, res) {
       res.status(400).send({ error: `There is no service type assigned to ${driver.name}` })
       return
     }
-    driver.set({ serviceTypeID: undefined });
+    driver.set({ serviceTypeID: undefined })
 
     await driver.save()
     res.send({ msg: `Service Type is unassigned from ${driver.name}` })

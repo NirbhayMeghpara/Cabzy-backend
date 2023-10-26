@@ -98,27 +98,27 @@ async function fetch(req, res) {
       }
     )
 
-    const filter = [];
+    const filter = []
 
     const rideDate = req.query.rideDate ? req.query.rideDate.trim() : null
     if (rideDate) {
       filter.push({
         rideDate: rideDate
-      });
+      })
     }
 
     const vehicleType = req.query.vehicleType ? req.query.vehicleType.trim() : null
     if (vehicleType) {
       filter.push({
         "serviceType.vehicleType": vehicleType,
-      });
+      })
     }
 
     const status = req.query.status ? parseInt(req.query.status.trim()) : null
     if (status) {
       filter.push({
         status: status,
-      });
+      })
     }
 
     if (filter.length > 0) {
@@ -126,7 +126,7 @@ async function fetch(req, res) {
         $match: {
           $and: filter,
         },
-      });
+      })
     }
 
     if (searchValue) {
@@ -172,7 +172,7 @@ async function fetch(req, res) {
 
 async function deleteRide(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.params.id);
+    const _id = new mongoose.Types.ObjectId(req.params.id)
     const driver = await Driver.findById(_id)
     if (!driver) {
       res.status(404).send({ msg: `No such driver found !!` })
@@ -182,7 +182,7 @@ async function deleteRide(req, res) {
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${driver.profile}`)
 
-    const deletedDriver = await Driver.findByIdAndDelete(_id);
+    const deletedDriver = await Driver.findByIdAndDelete(_id)
     res.send({ msg: `${deletedDriver.name} deleted successfully :(` })
   } catch (error) {
     res.status(500).send({ error: error.message })
@@ -194,8 +194,8 @@ async function getNextSequenceValue(sequenceName) {
     { _id: sequenceName },
     { $inc: { sequence_value: 1 } },
     { new: true, upsert: true }
-  );
-  return counter.sequence_value;
+  )
+  return counter.sequence_value
 }
 
 

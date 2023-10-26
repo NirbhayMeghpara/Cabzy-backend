@@ -4,11 +4,10 @@ const Driver = require("../models/driver")
 
 async function handleSocket(io) {
   io.on('connection', (socket) => {
-    console.log("User connected")
-    socket.on('assignToSelectedDriver', async ({ ride, driver }, callback) => {
+    socket.on('assignToSelectedDriver', async ({ ride, driver }) => {
       try {
         if (driver.status === 0) {
-          const updatedDriver = await Driver.findByIdAndUpdate(driver._id, { status: 1 }, {
+          const updatedDriver = await Driver.findByIdAndUpdate(driver._id, { status: 1, rideAssignTime: Date.now() }, {
             new: true,
             runValidators: true,
           })
@@ -23,16 +22,18 @@ async function handleSocket(io) {
           const rideData = await CreateRide.aggregate(pipeline)
 
           if (rideData[0] && updatedDriver) {
-            callback(null, rideData[0])
+            console.log("ride assigned")
+            io.emit("rideAssigned", rideData[0])
+          } else {
+            io.emit("error", "Error occured while assigning driver")
           }
-          callback("Error occured while assigning driver", null)
         }
       } catch (error) {
-        callback(error, null)
+        io.emit("error", error)
       }
     })
 
-    socket.on('requestAcceptedByDriver', async ({ ride }, callback) => {
+    socket.on('requestAcceptedByDriver', async ({ ride }) => {
       try {
         const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 3, assignSelected: true }, {
           new: true,
@@ -47,39 +48,39 @@ async function handleSocket(io) {
         const pipeline = getPipeline(updatedRide._id)
         const rideData = await CreateRide.aggregate(pipeline)
         if (rideData[0] && updatedDriver) {
-          callback(null, JSON.stringify(rideData[0]))
+          io.emit("rideAccepted", rideData[0])
+        } else {
+          io.emit("error", "Error occured while accepting ride by driver")
         }
-        callback("Error occured while accepting a ride", null)
-
-      } catch (error) {
-        callback(error, null)
+      }
+      catch (error) {
+        io.emit("error", error)
       }
     })
 
-    socket.on('selectedDriverRejectRide', async ({ ride }, callback) => {
+    socket.on('selectedDriverRejectRide', async ({ ride }) => {
       try {
         const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 1, assignSelected: undefined, driverID: undefined }, {
           new: true,
           runValidators: true,
         })
 
-        const updatedDriver = await Driver.findByIdAndUpdate(updatedRide.driverID, { status: 0 }, {
+        const updatedDriver = await Driver.findByIdAndUpdate(updatedRide.driverID, { status: 0, rideAssignTime: undefined }, {
           new: true,
           runValidators: true,
         })
 
+        console.log(updatedDriver)
+
         if (updatedRide && updatedDriver) {
-          callback(null, "Selected driver rejected a ride :( ")
+          io.emit("rideRejected", "Selected driver rejected a ride :( ")
+        } else {
+          io.emit("error", "Error occured while rejecting a ride by driver")
         }
-        callback("Error occured while rejecting a ride by driver", null)
-
-      } catch (error) {
-        callback(error, null)
       }
-    })
-
-    socket.on('disconnect', () => {
-      console.log('User disconnected')
+      catch (error) {
+        io.emit("error", error)
+      }
     })
   })
 }

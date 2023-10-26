@@ -7,7 +7,7 @@ async function edit(req, res) {
       throw new Error("Please provide valid input")
     }
 
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const setting = await Setting.findById(_id)
     if (!setting) {
       res.status(404).send({ msg: `No settings found !!` })

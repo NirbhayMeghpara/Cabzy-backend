@@ -13,32 +13,32 @@ async function addPrice(req, res) {
     req.body.vehicleType = capitalizeFirstLetter(req.body.vehicleType)
 
     const { city, vehicleType } = req.body
-    const duplicateVehicleType = await VehiclePrice.findOne({ city, vehicleType });
+    const duplicateVehicleType = await VehiclePrice.findOne({ city, vehicleType })
 
     if (duplicateVehicleType) {
-      res.status(409).send({ msg: `${duplicateVehicleType.vehicleType} pricing already added in ${duplicateVehicleType.city} city` });
+      res.status(409).send({ msg: `${duplicateVehicleType.vehicleType} pricing already added in ${duplicateVehicleType.city} city` })
       return
     }
 
-    const vehiclePrice = new VehiclePrice(req.body);
-    await vehiclePrice.save();
+    const vehiclePrice = new VehiclePrice(req.body)
+    await vehiclePrice.save()
 
     res.send({ msg: `${vehiclePrice.vehicleType} pricing added for ${vehiclePrice.city} city` })
   } catch (error) {
     if (error.errors.driverProfit) {
-      return res.status(400).send({ error: error.errors.driverProfit.properties.message });
+      return res.status(400).send({ error: error.errors.driverProfit.properties.message })
     }
     if (error.errors.maxSpace) {
-      return res.status(400).send({ error: error.errors.maxSpace.properties.message });
+      return res.status(400).send({ error: error.errors.maxSpace.properties.message })
     }
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ error: error.message })
   }
 }
 
 async function fetchAllPrice(req, res) {
   try {
     const city = capitalizeFirstLetter(decodeURIComponent(req.params.city))
-    const pricing = await VehiclePrice.aggregate([{ $match: { city } }]);
+    const pricing = await VehiclePrice.aggregate([{ $match: { city } }])
     if (!pricing.length) {
       res.status(404).send({ msg: `No pricing available for ${city}` })
       return
@@ -53,10 +53,10 @@ async function fetchAllPrice(req, res) {
 async function fetchPrice(req, res) {
   try {
     const city = capitalizeFirstLetter(decodeURIComponent(req.params.city))
-    const page = parseInt(req.query.page) || 1;
-    const limit = 4;
+    const page = parseInt(req.query.page) || 1
+    const limit = 4
 
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit
 
     const result = await VehiclePrice.aggregate([
       { $match: { city } },
@@ -71,7 +71,7 @@ async function fetchPrice(req, res) {
           ]
         }
       }
-    ]);
+    ])
 
     if (!result[0].pricing.length) {
       res.status(404).send({ msg: `No pricing available for ${city}` })
@@ -93,7 +93,7 @@ async function editPrice(req, res) {
       throw new Error("Please provide vehicle pricing")
     }
 
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
     const vehiclePricing = await VehiclePrice.findById(_id)
     if (!vehiclePricing) {
       res.status(404).send({ msg: `No such vehicle type found !!` })
@@ -110,17 +110,17 @@ async function editPrice(req, res) {
     res.send({ msg: `${vehiclePricing.vehicleType} edited successfully` })
   } catch (error) {
     if (error.errors.driverProfit) {
-      return res.status(400).send({ error: error.errors.driverProfit.properties.message });
+      return res.status(400).send({ error: error.errors.driverProfit.properties.message })
     }
     if (error.errors.maxSpace) {
-      return res.status(400).send({ error: error.errors.maxSpace.properties.message });
+      return res.status(400).send({ error: error.errors.maxSpace.properties.message })
     }
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ error: error.message })
   }
 }
 
 function capitalizeFirstLetter(word) {
-  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 }
 
 module.exports = { addPrice, fetchPrice, editPrice, fetchAllPrice, capitalizeFirstLetter }
