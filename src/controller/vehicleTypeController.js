@@ -49,7 +49,7 @@ async function edit(req, res) {
     let vehicleType = req.body.vehicleType
     vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1).toLowerCase()
 
-    const objectId = new mongoose.Types.ObjectId(req.params.id);
+    const objectId = new mongoose.Types.ObjectId(req.params.id)
     const vehicle = await VehicleType.findById(objectId)
 
     if (!vehicle) {

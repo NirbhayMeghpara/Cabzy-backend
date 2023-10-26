@@ -3,7 +3,7 @@ const User = require('../models/user')
 const path = require('path')
 const fs = require('fs')
 require('dotenv').config()
-const stripe = require('stripe')(process.env.STRIPE_KEY);
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
 
@@ -34,20 +34,20 @@ async function add(req, res) {
         return res.status(403).send({
           field: "email",
           msg: "Email is already registered",
-        });
+        })
       case !!(error.keyPattern && error.keyPattern.phone):
         return res.status(403).send({
           field: "phone",
           msg: "Phone number is already registered",
-        });
+        })
       case !!(error.errors && error.errors.name):
-        return res.status(400).send({ error: error.errors.name.properties.message });
+        return res.status(400).send({ error: error.errors.name.properties.message })
       case !!(error.errors && error.errors.email):
-        return res.status(400).send({ error: error.errors.email.properties.message });
+        return res.status(400).send({ error: error.errors.email.properties.message })
       case !!(error.errors && error.errors.phoneCode):
-        return res.status(400).send({ error: error.errors.phoneCode.properties.message });
+        return res.status(400).send({ error: error.errors.phoneCode.properties.message })
       case !!(error.errors && error.errors.phone):
-        return res.status(400).send({ error: error.errors.phone.properties.message });
+        return res.status(400).send({ error: error.errors.phone.properties.message })
       default:
         res.status(500).send({ error: error.message })
     }
@@ -77,7 +77,7 @@ async function fetch(req, res) {
       $sort: {
         [sortBy]: sortOrder,
       },
-    });
+    })
 
     pipeline.push({
       $facet: {
@@ -108,7 +108,7 @@ async function fetchUserByPhone(req, res) {
     const phoneCode = req.body.phoneCode
     const phone = req.body.phone
 
-    const user = await User.findOne({ phoneCode, phone });
+    const user = await User.findOne({ phoneCode, phone })
 
     if (!user) {
       res.status(404).send({ msg: 'No user found !' })
@@ -124,10 +124,10 @@ async function fetchUserByPhone(req, res) {
 async function edit(req, res) {
   try {
     if (!req.file) throw new Error("Profile image is required")
-    const { id, ...remaining } = req.body;
-    req.body = remaining;
+    const { id, ...remaining } = req.body
+    req.body = remaining
 
-    const _id = new mongoose.Types.ObjectId(id);
+    const _id = new mongoose.Types.ObjectId(id)
     const user = await User.findById(_id)
 
     if (!user) {
@@ -137,7 +137,7 @@ async function edit(req, res) {
     const oldImage = user.profile
 
     if (user.stripeID) {
-      const customer = await stripe.customers.update(user.stripeID, { name: req.body.name, email: req.body.email, phone: req.body.phone });
+      const customer = await stripe.customers.update(user.stripeID, { name: req.body.name, email: req.body.email, phone: req.body.phone })
       if (!customer) {
         res.status(500).send({ error: "Error occured while updating user with stripe !!" })
         return
@@ -168,12 +168,12 @@ async function edit(req, res) {
         return res.status(403).send({
           field: "email",
           message: "Email is already registered",
-        });
+        })
       case !!(error.keyPattern && error.keyPattern.phone):
         return res.status(403).send({
           field: "phone",
           message: "Phone number is already registered",
-        });
+        })
       default:
         res.status(500).send({ error: error.message })
     }
@@ -182,7 +182,7 @@ async function edit(req, res) {
 
 async function deleteUser(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.params.id);
+    const _id = new mongoose.Types.ObjectId(req.params.id)
     const user = await User.findById(_id)
     if (!user) {
       res.status(404).send({ msg: `No such user found !!` })
@@ -193,14 +193,14 @@ async function deleteUser(req, res) {
     fs.unlinkSync(`${uploadPath}/${user.profile}`)
 
     if (user.stripeID) {
-      const response = await stripe.customers.del(user.stripeID);
+      const response = await stripe.customers.del(user.stripeID)
       if (!response.deleted) {
         res.status(500).send({ error: "Error occured while deleting user from stripe !!" })
         return
       }
     }
 
-    const deletedUser = await User.findByIdAndDelete(_id);
+    const deletedUser = await User.findByIdAndDelete(_id)
     res.send({ msg: `${deletedUser.name} deleted successfully :(` })
   } catch (error) {
     res.status(500).send({ error: error.message })
@@ -211,7 +211,7 @@ async function deleteUser(req, res) {
 
 async function setupIntent(req, res) {
   try {
-    const _id = new mongoose.Types.ObjectId(req.body.id);
+    const _id = new mongoose.Types.ObjectId(req.body.id)
 
     const user = await User.findById(_id)
     if (!user.stripeID) {
@@ -219,7 +219,7 @@ async function setupIntent(req, res) {
         name: user.name,
         email: user.email,
         phone: user.phone
-      });
+      })
 
       if (!customer) {
         res.status(500).send({ error: "User not created successfully in stripe" })
@@ -231,7 +231,7 @@ async function setupIntent(req, res) {
     const setupIntent = await stripe.setupIntents.create({
       customer: user.stripeID,
       automatic_payment_methods: { enabled: true },
-    });
+    })
 
     await user.save()
     res.send({ clientSecret: setupIntent.client_secret })

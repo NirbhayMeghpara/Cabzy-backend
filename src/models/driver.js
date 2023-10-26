@@ -62,6 +62,9 @@ const driverSchema = new mongoose.Schema(
     status: {
       type: Number,
       default: 0 // 0 for available and 1 for unavailable
+    },
+    rideAssignTime: {
+      type: Date,
     }
   },
   {

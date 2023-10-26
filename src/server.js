@@ -12,7 +12,7 @@ const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
 const createRideRouter = require('./routers/createRideRouter')
 const socketController = require("./controller/socket")
-const cron = require("node-cron")
+const Cron = require("./controller/cron")
 
 const cors = require('cors')
 const path = require("path")
@@ -50,8 +50,4 @@ app.use(createRideRouter)
 
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/`)
-
-  // cron.schedule('*/10 * * * * *', () => {
-  //   console.log('running a task every minute')
-  // })
 })

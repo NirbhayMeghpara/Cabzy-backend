@@ -1,12 +1,12 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 const User = require('../models/user')
 require('dotenv').config()
-const stripe = require('stripe')(process.env.STRIPE_KEY);
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 async function add(req, res) {
   try {
     const token = req.body.token
-    const owner = new mongoose.Types.ObjectId(req.body.id);
+    const owner = new mongoose.Types.ObjectId(req.body.id)
 
     let userStripeID
     const user = await User.findById(owner)
@@ -15,7 +15,7 @@ async function add(req, res) {
         name: user.name,
         email: user.email,
         phone: user.phone
-      });
+      })
 
       if (!customer) {
         res.status(500).send({ error: "User not created successfully in stripe" })
@@ -28,7 +28,7 @@ async function add(req, res) {
     userStripeID = user.stripeID
     const source = await stripe.customers.createSource(userStripeID, { source: token })
     if (!source) {
-      res.status(500).send({ error: "Card not added to Stripe customer" });
+      res.status(500).send({ error: "Card not added to Stripe customer" })
       return
     }
 
@@ -45,7 +45,7 @@ async function fetchCards(req, res) {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please enter a valid data")
     }
-    const userID = new mongoose.Types.ObjectId(req.body.id);
+    const userID = new mongoose.Types.ObjectId(req.body.id)
 
     const user = await User.findById(userID)
     if (!user.cards.length) {
@@ -63,8 +63,8 @@ async function fetchCards(req, res) {
 
 async function deleteCard(req, res) {
   try {
-    const cardID = req.body.cardID;
-    const userID = new mongoose.Types.ObjectId(req.body.userID);
+    const cardID = req.body.cardID
+    const userID = new mongoose.Types.ObjectId(req.body.userID)
 
     const user = await User.findById(userID)
     if (!(user.stripeID && user.cards.includes(cardID))) {
@@ -78,7 +78,7 @@ async function deleteCard(req, res) {
       return
     }
 
-    user.cards = user.cards.filter(id => id.toString() !== cardID.toString());
+    user.cards = user.cards.filter(id => id.toString() !== cardID.toString())
     await user.save()
     res.send({ msg: `Card deleted successfully :(` })
   } catch (error) {
@@ -91,8 +91,8 @@ async function changeDefaultCard(req, res) {
     if (Object.keys(req.body).length === 0) {
       throw new Error("Please enter a valid data")
     }
-    const newCardID = req.body.cardID;
-    const userID = new mongoose.Types.ObjectId(req.body.userID);
+    const newCardID = req.body.cardID
+    const userID = new mongoose.Types.ObjectId(req.body.userID)
 
     const user = await User.findById(userID)
     if (!(user.stripeID && user.cards.includes(newCardID))) {
