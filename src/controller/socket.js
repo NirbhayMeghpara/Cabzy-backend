@@ -2,7 +2,11 @@ const mongoose = require("mongoose")
 const CreateRide = require("../models/createRide")
 const Driver = require("../models/driver")
 
+let socketIo
+
 async function handleSocket(io) {
+  console.log("Handle socket start")
+  socketIo = io
   io.on('connection', (socket) => {
     socket.on('assignToSelectedDriver', async ({ ride, driver }) => {
       try {
@@ -17,19 +21,18 @@ async function handleSocket(io) {
             runValidators: true
           })
 
-          const pipeline = getPipeline(updatedRide._id)
+          const pipeline = getRidePipeline(updatedRide._id)
 
           const rideData = await CreateRide.aggregate(pipeline)
 
           if (rideData[0] && updatedDriver) {
-            console.log("ride assigned")
-            io.emit("rideAssigned", rideData[0])
+            emitSocket("rideAssigned", rideData[0])
           } else {
-            io.emit("error", "Error occured while assigning driver")
+            emitSocket("error", "Error occured while assigning driver")
           }
         }
       } catch (error) {
-        io.emit("error", error)
+        emitSocket("error", error)
       }
     })
 
@@ -45,47 +48,50 @@ async function handleSocket(io) {
           runValidators: true,
         })
 
-        const pipeline = getPipeline(updatedRide._id)
+        const pipeline = getRidePipeline(updatedRide._id)
         const rideData = await CreateRide.aggregate(pipeline)
         if (rideData[0] && updatedDriver) {
-          io.emit("rideAccepted", rideData[0])
+          emitSocket("rideAccepted", rideData[0])
         } else {
-          io.emit("error", "Error occured while accepting ride by driver")
+          emitSocket("error", "Error occured while accepting ride by driver")
         }
       }
       catch (error) {
-        io.emit("error", error)
+        emitSocket("error", error)
       }
     })
 
     socket.on('selectedDriverRejectRide', async ({ ride }) => {
       try {
-        const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 1, assignSelected: undefined, driverID: undefined }, {
+
+        const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
           new: true,
           runValidators: true,
         })
 
-        const updatedDriver = await Driver.findByIdAndUpdate(updatedRide.driverID, { status: 0, rideAssignTime: undefined }, {
+        const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { $unset: { assignSelected: 1, driverID: 1 }, status: 1 }, {
           new: true,
           runValidators: true,
         })
-
-        console.log(updatedDriver)
 
         if (updatedRide && updatedDriver) {
-          io.emit("rideRejected", "Selected driver rejected a ride :( ")
+          emitSocket("rideRejected", { rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
         } else {
-          io.emit("error", "Error occured while rejecting a ride by driver")
+          emitSocket("error", "Error occured while rejecting a ride by driver")
         }
       }
       catch (error) {
-        io.emit("error", error)
+        emitSocket("error", error)
       }
     })
   })
 }
 
-function getPipeline(rideID) {
+function emitSocket(event, data) {
+  socketIo.emit(event, data)
+}
+
+function getRidePipeline(rideID) {
   const pipeline = []
 
   pipeline.push({ $match: { _id: new mongoose.Types.ObjectId(rideID) } })
@@ -153,5 +159,7 @@ function getPipeline(rideID) {
 }
 
 module.exports = {
-  handleSocket
+  handleSocket,
+  emitSocket,
+  getRidePipeline
 }
