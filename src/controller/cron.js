@@ -2,10 +2,10 @@ const cron = require("node-cron")
 const CreateRide = require("../models/createRide")
 const Driver = require("../models/driver")
 const { emitSocket, getRidePipeline } = require("./socket")
+const Setting = require("../models/setting")
 
 cron.schedule('*/10 * * * * *', async () => {
   getAssignedRide()
-
 })
 
 async function getAssignedRide() {
