@@ -84,11 +84,80 @@ async function handleSocket(io) {
         emitSocket("error", error)
       }
     })
+
+    socket.on('assignToNearestDriver', async (ride) => {
+      try {
+        assignDriver(ride)
+        // const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { driverID: driver._id, status: 2, assignSelected: true }, {
+        //   new: true,
+        //   runValidators: true
+        // })
+
+        // const pipeline = getRidePipeline(updatedRide._id)
+
+        // const rideData = await CreateRide.aggregate(pipeline)
+
+        // if (rideData[0] && updatedDriver) {
+        //   emitSocket("rideAssigned", rideData[0])
+        // } else {
+        //   emitSocket("error", "Error occured while assigning driver")
+        // }
+
+      } catch (error) {
+        emitSocket("error", error)
+      }
+    })
   })
+}
+
+async function assignDriver(rideData) {
+  const pipeline = getDriversPipeline(rideData._id)
+
+  const ride = await CreateRide.aggregate(pipeline)
+
+  const drivers = ride[0].drivers.map((driver) => driver._id)
+  console.log(drivers)
+
+
+
 }
 
 function emitSocket(event, data) {
   socketIo.emit(event, data)
+}
+
+function getDriversPipeline(rideID) {
+  const pipeline = [
+    {
+      $match: { _id: new mongoose.Types.ObjectId(rideID) }
+    },
+    {
+      $lookup: {
+        from: "drivers",
+        let: { serviceTypeID: "$serviceTypeID", cityID: "$cityID" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$serviceTypeID", "$$serviceTypeID"] }, // Match by serviceTypeID
+                  { $eq: ["$cityID", "$$cityID"] }, // Match by cityID
+                  { $eq: ["$status", 0] }, // Condition 1: Status is 0
+                  { $eq: ["$isApproved", true] } // Condition 2: isApproved is true
+                ]
+              }
+            }
+          },
+          {
+            $project: { _id: 1 }
+          }
+        ],
+        as: "drivers"
+      }
+    }
+  ]
+
+  return pipeline
 }
 
 function getRidePipeline(rideID) {
@@ -161,5 +230,6 @@ function getRidePipeline(rideID) {
 module.exports = {
   handleSocket,
   emitSocket,
-  getRidePipeline
+  getRidePipeline,
+  assignDriver
 }
