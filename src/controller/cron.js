@@ -1,6 +1,7 @@
 const cron = require("node-cron")
 const CreateRide = require("../models/createRide")
 const Driver = require("../models/driver")
+const { emitSocket, getRidePipeline } = require("./socket")
 
 cron.schedule('*/10 * * * * *', async () => {
   getAssignedRide()
@@ -23,23 +24,24 @@ async function checkDriver(ride) {
 
   let now = Math.floor(Date.now() / 1000)
 
-  console.log("Current Time:", now)
-  console.log("Max Time:", maxTimeout)
-
   if (now >= maxTimeout) {
-    console.log('Driver Timeout')
-    futureTimeInSeconds = now + 30
+    try {
+      console.log('Driver Timeout ' + driver.name)
+
+      driver.set({ rideAssignTime: undefined })
+      driver.set({ status: 0 })
+
+      const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { $unset: { assignSelected: 1, driverID: 1 }, status: 1 }, {
+        new: true,
+        runValidators: true,
+      })
+      const pipeline = getRidePipeline(updatedRide._id)
+      const rideData = await CreateRide.aggregate(pipeline)
+      await driver.save()
+      emitSocket('driverTimeout', { ride: rideData[0], driver: driver.name })
+    } catch (error) {
+      emitSocket("error", error)
+    }
+
   }
 }
-
-
-
-// function driverTimeout() {
-//   now = new Date()
-//   currentTimeInSeconds = Math.floor(now.getTime() / 1000)
-//   console.log("Start", currentTimeInSeconds)
-//   if (currentTimeInSeconds >= futureTimeInSeconds) {
-//     console.log('Driver Timeout')
-//     futureTimeInSeconds = currentTimeInSeconds + 30
-//   }
-// }
