@@ -87,11 +87,11 @@ async function handleSocket(io) {
 
     socket.on('assignToNearestDriver', async (ride) => {
       try {
-        assignDriver(ride)
-        // const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { driverID: driver._id, status: 2, assignSelected: true }, {
-        //   new: true,
-        //   runValidators: true
-        // })
+        const updatedRide = await CreateRide.findById(ride._id)
+        updatedRide.rejectedDriverID = []
+        updatedRide.timeoutDriverID = []
+        await updatedRide.save()
+        assignDriver(updatedRide)
 
         // const pipeline = getRidePipeline(updatedRide._id)
 
@@ -112,11 +112,48 @@ async function handleSocket(io) {
 
 async function assignDriver(rideData) {
   const pipeline = getDriversPipeline(rideData._id)
-
   const ride = await CreateRide.aggregate(pipeline)
 
-  const drivers = ride[0].drivers.map((driver) => driver._id)
-  console.log(drivers)
+  if (ride[0].drivers.length === 0) {
+    // const updatedRide = await CreateRide.findByIdAndUpdate(rideData._id, { $unset: { assignSelected: 1, driverID: 1 }, status: 1 }, {
+    //   new: true,
+    //   runValidators: true,
+    // })
+    // const pipeline = getRidePipeline(updatedRide._id)
+    // const result = await CreateRide.aggregate(pipeline)
+    // emitSocket('nearestDriverTimeout', { ride: result[0] })
+    return
+  }
+  console.log("Ride", ride[0].drivers)
+
+  // const drivers = ride[0].drivers.map((driver) => driver._id)
+  // console.log("Driver Array", drivers)
+
+  for (let i = 0; i < ride[0].drivers.length; i++) {
+    const driver = ride[0].drivers[i]
+    const selectedDriver = await Driver.findById(driver._id)
+
+    if (selectedDriver.status === 0) {
+      selectedDriver.status = 1
+      selectedDriver.rideAssignTime = Date.now()
+      await selectedDriver.save()
+
+      const updatedRide = await CreateRide.findByIdAndUpdate(ride[0]._id, { driverID: selectedDriver._id, status: 2, assignSelected: false }, {
+        new: true,
+        runValidators: true,
+      })
+
+      const pipeline = getRidePipeline(updatedRide._id)
+      const rideData = await CreateRide.aggregate(pipeline)
+
+      if (rideData[0] && selectedDriver) {
+        emitSocket("rideAssigned", rideData[0])
+      } else {
+        emitSocket("error", "Error occured while assigning driver")
+      }
+      break
+    }
+  }
 
 
 
@@ -140,10 +177,10 @@ function getDriversPipeline(rideID) {
             $match: {
               $expr: {
                 $and: [
-                  { $eq: ["$serviceTypeID", "$$serviceTypeID"] }, // Match by serviceTypeID
-                  { $eq: ["$cityID", "$$cityID"] }, // Match by cityID
-                  { $eq: ["$status", 0] }, // Condition 1: Status is 0
-                  { $eq: ["$isApproved", true] } // Condition 2: isApproved is true
+                  { $eq: ["$serviceTypeID", "$$serviceTypeID"] },
+                  { $eq: ["$cityID", "$$cityID"] },
+                  { $eq: ["$status", 0] },
+                  { $eq: ["$isApproved", true] }
                 ]
               }
             }
@@ -153,6 +190,20 @@ function getDriversPipeline(rideID) {
           }
         ],
         as: "drivers"
+      }
+    },
+    {
+      $addFields: {
+        drivers: {
+          $setDifference: ["$drivers._id", "$rejectedDriverID"]
+        }
+      }
+    },
+    {
+      $addFields: {
+        drivers: {
+          $setDifference: ["$drivers", "$timeoutDriverID"]
+        }
       }
     }
   ]
