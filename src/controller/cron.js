@@ -4,23 +4,33 @@ const Driver = require("../models/driver")
 const { emitSocket, getRidePipeline, assignDriver } = require("./socket")
 const Setting = require("../models/setting")
 
+let driverTime
+
 cron.schedule('*/10 * * * * *', async () => {
   getAssignedRide()
 })
 
+async function checkSettings() {
+  const data = await Setting.find({})
+  driverTime = parseInt(data[0].driverTimeout)
+}
+
 async function getAssignedRide() {
+  checkSettings()
   const rides = await CreateRide.find({ status: 2 })
   if (!rides.length) console.log("No ride there")
-  else rides.forEach((ride) => {
-    checkDriver(ride)
-  })
+  else {
+    for (const ride of rides) {
+      await checkDriver(ride)
+    }
+  }
 }
 
 async function checkDriver(ride) {
   const driver = await Driver.findById(ride.driverID)
   const rideAssignTime = driver.rideAssignTime
 
-  let maxTimeout = Math.floor(rideAssignTime / 1000) + 30
+  let maxTimeout = Math.floor(rideAssignTime / 1000) + driverTime
 
   let now = Math.floor(Date.now() / 1000)
 

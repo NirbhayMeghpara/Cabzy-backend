@@ -186,6 +186,9 @@ function getDriversPipeline(rideID) {
             }
           },
           {
+            $sort: { "updatedAt": 1 }
+          },
+          {
             $project: { _id: 1 }
           }
         ],
