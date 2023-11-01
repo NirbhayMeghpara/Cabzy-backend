@@ -92,18 +92,32 @@ async function handleSocket(io) {
         updatedRide.timeoutDriverID = []
         await updatedRide.save()
         assignDriver(updatedRide)
-
-        // const pipeline = getRidePipeline(updatedRide._id)
-
-        // const rideData = await CreateRide.aggregate(pipeline)
-
-        // if (rideData[0] && updatedDriver) {
-        //   emitSocket("rideAssigned", rideData[0])
-        // } else {
-        //   emitSocket("error", "Error occured while assigning driver")
-        // }
-
       } catch (error) {
+        emitSocket("error", error)
+      }
+    })
+
+    socket.on('nearestDriverRejectRide', async ({ ride }) => {
+      try {
+        const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
+          new: true,
+          runValidators: true,
+        })
+
+        const updatedRide = await CreateRide.findById(ride._id)
+        updatedRide.rejectedDriverID.push(updatedDriver._id)
+        updatedRide.driverID = undefined
+        updatedRide.status = 0
+
+        await updatedRide.save()
+
+        if (updatedRide && updatedDriver) {
+          emitSocket("rideRejected", { rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
+        } else {
+          emitSocket("error", "Error occured while rejecting a ride by driver")
+        }
+      }
+      catch (error) {
         emitSocket("error", error)
       }
     })
@@ -115,19 +129,17 @@ async function assignDriver(rideData) {
   const ride = await CreateRide.aggregate(pipeline)
 
   if (ride[0].drivers.length === 0) {
-    // const updatedRide = await CreateRide.findByIdAndUpdate(rideData._id, { $unset: { assignSelected: 1, driverID: 1 }, status: 1 }, {
-    //   new: true,
-    //   runValidators: true,
-    // })
-    // const pipeline = getRidePipeline(updatedRide._id)
-    // const result = await CreateRide.aggregate(pipeline)
-    // emitSocket('nearestDriverTimeout', { ride: result[0] })
+    const updatedRide = await CreateRide.findByIdAndUpdate(rideData._id, { $unset: { assignSelected: 1, driverID: 1 }, status: 1 }, {
+      new: true,
+      runValidators: true,
+    })
+    const pipeline = getRidePipeline(updatedRide._id)
+    const result = await CreateRide.aggregate(pipeline)
+    emitSocket('rideTerminate', result[0])
     return
   }
   console.log("Ride", ride[0].drivers)
-
-  // const drivers = ride[0].drivers.map((driver) => driver._id)
-  // console.log("Driver Array", drivers)
+  let updatedRide = rideData
 
   for (let i = 0; i < ride[0].drivers.length; i++) {
     const driver = ride[0].drivers[i]
@@ -138,7 +150,7 @@ async function assignDriver(rideData) {
       selectedDriver.rideAssignTime = Date.now()
       await selectedDriver.save()
 
-      const updatedRide = await CreateRide.findByIdAndUpdate(ride[0]._id, { driverID: selectedDriver._id, status: 2, assignSelected: false }, {
+      updatedRide = await CreateRide.findByIdAndUpdate(ride[0]._id, { driverID: selectedDriver._id, status: 2, assignSelected: false }, {
         new: true,
         runValidators: true,
       })
@@ -155,8 +167,16 @@ async function assignDriver(rideData) {
     }
   }
 
+  if (updatedRide.status === 0) {
+    const pipeline = getRidePipeline(updatedRide._id)
+    const rideData = await CreateRide.aggregate(pipeline)
 
-
+    if (rideData[0]) {
+      emitSocket("rideHold", rideData[0])
+    } else {
+      emitSocket("error", "Error occured while assigning driver")
+    }
+  }
 }
 
 function emitSocket(event, data) {
@@ -179,7 +199,6 @@ function getDriversPipeline(rideID) {
                 $and: [
                   { $eq: ["$serviceTypeID", "$$serviceTypeID"] },
                   { $eq: ["$cityID", "$$cityID"] },
-                  { $eq: ["$status", 0] },
                   { $eq: ["$isApproved", true] }
                 ]
               }
