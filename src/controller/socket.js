@@ -121,6 +121,47 @@ async function handleSocket(io) {
         emitSocket("error", error)
       }
     })
+
+    socket.on("updateRideStatus", async (ride) => {
+      try {
+        if (ride.status < 7) {
+          const updatedRide = await CreateRide.findById(ride._id)
+          updatedRide.status = ride.status + 1
+          if (updatedRide.status + 1 === 7) {
+            await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
+              new: true,
+              runValidators: true,
+            })
+          }
+          await updatedRide.save()
+
+          const pipeline = getRidePipeline(updatedRide._id)
+          const rides = await CreateRide.aggregate(pipeline)
+          emitSocket("statusUpdated", rides[0])
+        }
+      } catch (error) {
+        emitSocket("error", error)
+      }
+    })
+
+    socket.on("cancelRide", async (ride) => {
+      try {
+        if (ride.status === 1) {
+          const updatedRide = await CreateRide.findById(ride._id)
+          updatedRide.status = -1
+          await updatedRide.save()
+
+          const pipeline = getRidePipeline(updatedRide._id)
+          const rides = await CreateRide.aggregate(pipeline)
+          emitSocket("rideCancelled", rides[0])
+        } else {
+          emitSocket("error", "Ride status must be pending !!")
+        }
+
+      } catch (error) {
+        emitSocket("error", error)
+      }
+    })
   })
 }
 
@@ -135,7 +176,7 @@ async function assignDriver(rideData) {
     })
     const pipeline = getRidePipeline(updatedRide._id)
     const result = await CreateRide.aggregate(pipeline)
-    emitSocket('rideTerminate', result[0])
+    emitSocket('rideTimeout', result[0])
     return
   }
   console.log("Ride", ride[0].drivers)
@@ -199,6 +240,7 @@ function getDriversPipeline(rideID) {
                 $and: [
                   { $eq: ["$serviceTypeID", "$$serviceTypeID"] },
                   { $eq: ["$cityID", "$$cityID"] },
+                  { $in: ["$status", [0, 1]] },
                   { $eq: ["$isApproved", true] }
                 ]
               }

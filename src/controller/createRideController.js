@@ -100,10 +100,27 @@ async function fetch(req, res) {
 
     const filter = []
 
-    const rideDate = req.query.rideDate ? req.query.rideDate.trim() : null
-    if (rideDate) {
+    const from = req.query.rideDateFrom ? req.query.rideDateFrom.trim() : null
+    const to = req.query.rideDateTo ? req.query.rideDateTo.trim() : null
+
+    if (from && to) {
       filter.push({
-        rideDate: rideDate
+        rideDate: {
+          $gte: from,
+          $lte: to
+        }
+      })
+    } else if (from) {
+      filter.push({
+        rideDate: {
+          $gte: from
+        }
+      })
+    } else if (to) {
+      filter.push({
+        rideDate: {
+          $lte: to
+        }
       })
     }
 
@@ -133,7 +150,7 @@ async function fetch(req, res) {
       const regex = new RegExp(searchValue, "i")
       pipeline.push({
         $match: {
-          $or: [{ userName: regex }, { rideID: regex }, { "user.phone": regex }],
+          $or: [{ userName: regex }, { rideID: regex }, { pickUp: regex }, { dropOff: regex }, { "user.phone": regex }],
         },
       })
     }
@@ -144,14 +161,12 @@ async function fetch(req, res) {
       },
     })
 
-
     pipeline.push({
       $facet: {
         data: [{ $count: "rideCount" }],
         rides: [{ $skip: (currentPage - 1) * limit }, { $limit: limit }],
       },
     })
-
 
     const result = await CreateRide.aggregate(pipeline)
 
@@ -197,6 +212,5 @@ async function getNextSequenceValue(sequenceName) {
   )
   return counter.sequence_value
 }
-
 
 module.exports = { create, fetch, deleteRide, getNextSequenceValue }
