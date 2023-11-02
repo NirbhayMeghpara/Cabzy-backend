@@ -6,7 +6,7 @@ const Setting = require("../models/setting")
 
 let driverTime
 
-cron.schedule('*/20 * * * * *', async () => {
+cron.schedule('*/30 * * * * *', async () => {
   getAssignedRide()
 })
 
