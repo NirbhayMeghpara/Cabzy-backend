@@ -89,6 +89,14 @@ const createRideSchema = new mongoose.Schema(
     },
     assignSelected: {
       type: Boolean,
+    },
+    rating: {
+      type: Number,
+      trim: true
+    },
+    feedback: {
+      type: String,
+      trim: true
     }
   },
   {
