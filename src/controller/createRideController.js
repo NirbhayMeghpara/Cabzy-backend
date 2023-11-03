@@ -20,6 +20,86 @@ async function create(req, res) {
   }
 }
 
+async function fetchAll(req, res) {
+  try {
+    const rideStatus = req.query.rideStatus ? JSON.parse(req.query.rideStatus) : null
+    const pipeline = []
+
+    if (rideStatus) {
+      pipeline.push({
+        $match: {
+          status: { $in: rideStatus }
+        }
+      })
+    }
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "userID",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: "$user"
+      }
+    )
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "cities",
+          localField: "cityID",
+          foreignField: "_id",
+          as: "city"
+        }
+      },
+      {
+        $unwind: "$city"
+      }
+    )
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "vehicleprices",
+          localField: "serviceTypeID",
+          foreignField: "_id",
+          as: "serviceType"
+        }
+      },
+      {
+        $unwind: "$serviceType"
+      }
+    )
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "drivers",
+          localField: "driverID",
+          foreignField: "_id",
+          as: "driver"
+        }
+      },
+      {
+        $unwind: {
+          path: "$driver",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    )
+
+    const result = await CreateRide.aggregate(pipeline)
+
+    res.send(result)
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function fetch(req, res) {
   try {
     const currentPage = parseInt(req.query.page) || 1
@@ -204,6 +284,25 @@ async function deleteRide(req, res) {
   }
 }
 
+async function feedback(req, res) {
+  try {
+    if (Object.keys(req.body).length === 0) {
+      throw new Error("Please enter a valid city")
+    }
+
+    const _id = new mongoose.Types.ObjectId(req.body.id)
+    const ride = await CreateRide.findById(_id)
+
+    ride.rating = req.body.rating
+    ride.feedback = req.body.feedback
+
+    await ride.save()
+    res.send({ msg: "Thanks for sharing your experience :)" })
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function getNextSequenceValue(sequenceName) {
   const counter = await Counter.findOneAndUpdate(
     { _id: sequenceName },
@@ -213,4 +312,4 @@ async function getNextSequenceValue(sequenceName) {
   return counter.sequence_value
 }
 
-module.exports = { create, fetch, deleteRide, getNextSequenceValue }
+module.exports = { create, fetchAll, fetch, deleteRide, feedback, getNextSequenceValue }
