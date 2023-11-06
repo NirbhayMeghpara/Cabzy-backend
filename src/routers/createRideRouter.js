@@ -21,4 +21,7 @@ router.delete('/ride/delete/:id', auth, createRideController.deleteRide)
 //---------------------------------- ride feedback  ----------------------------------//
 router.post('/ride/feedback', auth, upload.none(), createRideController.feedback)
 
+//---------------------------------- Deduct amount from user card  ----------------------------------//
+router.post('/ride/charge', auth, upload.none(), createRideController.charge)
+
 module.exports = router

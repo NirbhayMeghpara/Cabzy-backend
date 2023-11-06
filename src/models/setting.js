@@ -12,6 +12,10 @@ const settingSchema = new mongoose.Schema({
     required: true,
     trim: true,
     default: '1'
+  },
+  stripeKey: {
+    type: String,
+    trim: true,
   }
 })
 
