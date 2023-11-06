@@ -179,7 +179,6 @@ async function assignDriver(rideData) {
     emitSocket('rideTimeout', result[0])
     return
   }
-  console.log("Ride", ride[0].drivers)
   let updatedRide = rideData
 
   for (let i = 0; i < ride[0].drivers.length; i++) {

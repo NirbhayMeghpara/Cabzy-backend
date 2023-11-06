@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const CreateRide = require('../models/createRide')
 const Counter = require('../models/counter')
+const User = require('../models/user')
+const Setting = require('../models/setting')
 
 async function create(req, res) {
   try {
@@ -9,6 +11,24 @@ async function create(req, res) {
     }
     req.body.stops = JSON.parse(req.body.stops)
     req.body.rideID = await getNextSequenceValue('ride_id')
+
+    if (req.body.paymentType === 'card') {
+      const stripe = await initStripe()
+
+      const id = new mongoose.Types.ObjectId(req.body.userID)
+      const user = await User.findById(id)
+
+      if (!user) {
+        res.status(404).send({ msg: "No user found!" })
+        return
+      }
+
+      const customer = await stripe.customers.retrieve(user.stripeID)
+      if (!customer.default_source) {
+        res.status(404).send({ msg: `No card is added by ${user.name}` })
+        return
+      }
+    }
 
     const ride = new CreateRide(req.body)
     if (!ride) throw new Error("Something went wrong. Please try again !")
@@ -303,6 +323,57 @@ async function feedback(req, res) {
   }
 }
 
+async function charge(req, res) {
+  try {
+    if (Object.keys(req.body).length === 0) {
+      throw new Error("Valid user id is required")
+    }
+    const stripe = await initStripe()
+
+    const id = new mongoose.Types.ObjectId(req.body.id)
+    const pipeline = []
+
+    pipeline.push({ $match: { _id: id } })
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "userID",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $unwind: "$user"
+      }
+    )
+
+    const ride = await CreateRide.aggregate(pipeline)
+
+    if (!ride) {
+      res.status(404).send({ msg: "No user found" })
+      return
+    }
+
+    stripe.customers.retrieve(ride[0].user.stripeID, async (err, customer) => {
+      if (err) {
+        throw new Error("Something went wrong while deducting payment")
+      } else {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: ride[0].totalFare,
+          currency: 'usd',
+          customer: ride[0].user.stripeID,
+          payment_method: customer.default_source
+        })
+        res.status(200).send({ client_secret: paymentIntent.client_secret })
+      }
+    })
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+}
+
 async function getNextSequenceValue(sequenceName) {
   const counter = await Counter.findOneAndUpdate(
     { _id: sequenceName },
@@ -312,4 +383,10 @@ async function getNextSequenceValue(sequenceName) {
   return counter.sequence_value
 }
 
-module.exports = { create, fetchAll, fetch, deleteRide, feedback, getNextSequenceValue }
+async function initStripe() {
+  const setting = await Setting.find({})
+  return require('stripe')(`${setting[0].stripeKey}`)
+}
+
+
+module.exports = { create, fetchAll, fetch, deleteRide, feedback, charge, getNextSequenceValue }
