@@ -16,7 +16,7 @@ async function auth(req, res, next) {
     req.admin = admin
     next()
 
-  } catch (e) {
+  } catch (error) {
     res.status(401).send({ error: 'Unauthorized Access' })
   }
 }

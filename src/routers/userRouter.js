@@ -6,7 +6,6 @@ const multer = require('multer')
 const router = new express.Router()
 
 //------------------------------------ Adding user data into database ------------------------------------ //
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     return cb(null, './uploads/user')
@@ -38,21 +37,17 @@ router.post('/user/add', auth, upload.single("profile"), userController.add, (er
 })
 
 //---------------------------------- Fetching users profile from database ---------------------------------- //
-
 router.get('/user', auth, userController.fetch)
 
 //---------------------------------- Fetching users profile from database ---------------------------------- //
-
 router.post('/user/phone', auth, upload.none(), userController.fetchUserByPhone)
 
 //--------------------------------- Updating user profile and saving to database --------------------------------- //
-
 router.patch('/user/edit', auth, upload.single("profile"), userController.edit, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })
 
 //---------------------------------- Deleting user profile from database ----------------------------------//
-
 router.delete('/user/delete/:id', auth, userController.deleteUser)
 
 //---------------------------------- Stripe intent ----------------------------------//
