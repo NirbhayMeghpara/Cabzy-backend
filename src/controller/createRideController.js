@@ -351,8 +351,8 @@ async function charge(req, res) {
 
     const ride = await CreateRide.aggregate(pipeline)
 
-    if (!ride) {
-      res.status(404).send({ msg: "No user found" })
+    if (!ride.length) {
+      res.status(404).send({ msg: "No data found" })
       return
     }
 
@@ -360,13 +360,15 @@ async function charge(req, res) {
       if (err) {
         throw new Error("Something went wrong while deducting payment")
       } else {
-        const paymentIntent = await stripe.paymentIntents.create({
+        const charge = await stripe.charges.create({
           amount: ride[0].totalFare,
           currency: 'usd',
+          source: customer.default_source,
+          description: 'Ride payment',
           customer: ride[0].user.stripeID,
-          payment_method: customer.default_source
         })
-        res.status(200).send({ client_secret: paymentIntent.client_secret })
+
+        res.status(200).send({ charge: charge })
       }
     })
   } catch (error) {
@@ -387,6 +389,5 @@ async function initStripe() {
   const setting = await Setting.find({})
   return require('stripe')(`${setting[0].stripeKey}`)
 }
-
 
 module.exports = { create, fetchAll, fetch, deleteRide, feedback, charge, getNextSequenceValue }
