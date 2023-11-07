@@ -4,8 +4,10 @@ const path = require('path')
 const fs = require('fs')
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_KEY)
+const nodemailer = require('nodemailer')
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
+const { getWelcomeUserEmail } = require('./mail')
 
 async function add(req, res) {
   try {
@@ -22,6 +24,28 @@ async function add(req, res) {
 
     const user = new User(userData)
     await user.save()
+
+    let config = {
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_ID,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    }
+
+    let transporter = nodemailer.createTransport(config)
+
+    const html = getWelcomeUserEmail(user)
+
+    const mail = {
+      from: process.env.EMAIL_ID,
+      to: user.email,
+      subject: "Welcome to Cabzy!!",
+      html
+    }
+
+    await transporter.sendMail(mail)
+
     res.status(201).send({ msg: `Welcome ${user.name}, User added successfully` })
   } catch (error) {
     if (req.file) {
