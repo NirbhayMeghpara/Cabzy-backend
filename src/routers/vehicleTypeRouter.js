@@ -1,5 +1,4 @@
-const express = require("express");
-const VehicleType = require('../models/vehicleType')
+const express = require("express")
 const auth = require('../middleware/auth')
 const vehicleController = require('../controller/vehicleTypeController')
 const multer = require('multer')
@@ -33,17 +32,14 @@ const upload = multer({
 })
 
 // ----------------------------  Adding vehicleType to database  ---------------------------- // 
-
 router.post('/vehicle/add', auth, upload.single("vehicleImage"), vehicleController.add, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })
 
 // ----------------------------  Fetching vehicleType from database  ---------------------------- // 
-
 router.get('/vehicle', auth, vehicleController.fetch)
 
 // ----------------------------  Updating vehicleType from database  ---------------------------- // 
-
 router.patch('/vehicle/edit/:id', auth, upload.single("vehicleImage"), vehicleController.edit, (err, req, res, next) => {
   res.status(400).send({ error: err.message })
 })

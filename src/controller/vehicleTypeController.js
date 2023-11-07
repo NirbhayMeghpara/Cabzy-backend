@@ -16,7 +16,7 @@ async function add(req, res) {
 
     const vehicle = await new VehicleType(vehicleData)
     await vehicle.save()
-    res.status(201).send({ msg: `${vehicleType} added successfully` })
+    res.status(201).send({ msg: `${vehicleType} added successfully`, data: vehicle })
   }
   catch (error) {
     if (req.file) {
@@ -65,7 +65,7 @@ async function edit(req, res) {
     const uploadPath = path.join(__dirname, "../../uploads")
     fs.unlinkSync(`${uploadPath}/${oldImage}`)
 
-    res.status(200).send({ msg: `Vehicle edited successfully !!` })
+    res.status(200).send({ msg: `Vehicle edited successfully !!`, data: vehicle })
   } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
