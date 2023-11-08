@@ -10,7 +10,7 @@ async function add(req, res) {
 
     const country = await Country(req.body)
     await country.save()
-    res.send({ msg: `${req.body.name} added successfully` })
+    res.send({ msg: `${req.body.name} added successfully`, country })
   } catch (error) {
     if (error.keyValue) {
       error.message = `${error.keyValue.name} is already added !!`

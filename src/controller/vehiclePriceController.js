@@ -86,7 +86,6 @@ async function fetchPrice(req, res) {
   }
 }
 
-
 async function editPrice(req, res) {
   try {
     if (Object.keys(req.body).length === 0) {
@@ -107,7 +106,8 @@ async function editPrice(req, res) {
     vehiclePricing.unitTimePrice = req.body.unitTimePrice
     vehiclePricing.maxSpace = req.body.maxSpace
     await vehiclePricing.save()
-    res.send({ msg: `${vehiclePricing.vehicleType} edited successfully` })
+
+    res.send({ msg: `${vehiclePricing.vehicleType} edited successfully`, pricing: vehiclePricing })
   } catch (error) {
     if (error.errors.driverProfit) {
       return res.status(400).send({ error: error.errors.driverProfit.properties.message })
