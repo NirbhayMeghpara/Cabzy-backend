@@ -1,6 +1,8 @@
 const mongoose = require("mongoose")
 const CreateRide = require("../models/createRide")
 const Driver = require("../models/driver")
+require('dotenv').config()
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
 let socketIo
 
@@ -51,6 +53,12 @@ async function handleSocket(io) {
         const pipeline = getRidePipeline(updatedRide._id)
         const rideData = await CreateRide.aggregate(pipeline)
         if (rideData[0] && updatedDriver) {
+          await client.messages.create({
+            body: `Good news! Your ride #${rideData[0].rideID} request has been accepted by a driver, please be ready at your pickup location. They'll be on their way shortly.`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: '+919664570980'
+          })
+
           emitSocket("rideAccepted", rideData[0])
         } else {
           emitSocket("error", "Error occured while accepting ride by driver")
@@ -127,10 +135,25 @@ async function handleSocket(io) {
         if (ride.status < 7) {
           const updatedRide = await CreateRide.findById(ride._id)
           updatedRide.status = ride.status + 1
-          if (updatedRide.status + 1 === 7) {
+
+          if (updatedRide.status === 6) {
+            await client.messages.create({
+              body: `Exciting news! Your ride #${updatedRide.rideID} journey has begun. Driver is now en route to your destination. Sit back, relax, and enjoy the ride with us! Feel free to track the ride in real-time on the app..`,
+              from: process.env.TWILIO_PHONE_NUMBER,
+              to: '+919664570980'
+            })
+          }
+
+          if (updatedRide.status === 7) {
             await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
               new: true,
               runValidators: true,
+            })
+
+            await client.messages.create({
+              body: `You've reached your destination with ease. Your ride #${updatedRide.rideID} is now complete. We appreciate you choosing Cabzy for your journey. Your feedback is valuable to us. Please take a moment to share your thoughts about your experience. Safe travels!`,
+              from: process.env.TWILIO_PHONE_NUMBER,
+              to: '+919664570980'
             })
           }
           await updatedRide.save()

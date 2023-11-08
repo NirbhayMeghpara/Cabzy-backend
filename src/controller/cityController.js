@@ -11,11 +11,10 @@ async function add(req, res) {
 
     const arrayOfObjects = JSON.parse(req.body.coordinates)
     const linearRing = arrayOfObjects.map(point => [point.lng, point.lat])
-
-    // Add the first point as the last point to close the polygon
+    // Add the first point as the last point
     linearRing.push(linearRing[0])
 
-    // Create a GeoJSON Polygon
+    // GeoJSON Polygon type
     const coordinates = {
       type: 'Polygon',
       coordinates: [linearRing]
@@ -61,7 +60,6 @@ async function fetchCity(req, res) {
     const country = decodeURIComponent(req.params.country).toLowerCase()
     const page = parseInt(req.query.page) || 1
     const limit = 4
-
     const skip = (page - 1) * limit
 
     const result = await City.aggregate([
@@ -113,10 +111,10 @@ async function edit(req, res) {
     const arrayOfObjects = JSON.parse(req.body.coordinates)
     const linearRing = arrayOfObjects.map(point => [point.lng, point.lat])
 
-    // Add the first point as the last point to close the polygon
+    // Add the first point as the last point
     linearRing.push(linearRing[0])
 
-    // Create a GeoJSON Polygon
+    // GeoJSON Polygon type
     const coordinates = {
       type: 'Polygon',
       coordinates: [linearRing]

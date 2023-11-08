@@ -3,6 +3,8 @@ const CreateRide = require('../models/createRide')
 const Counter = require('../models/counter')
 const User = require('../models/user')
 const Setting = require('../models/setting')
+require('dotenv').config()
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
 async function create(req, res) {
   try {
@@ -364,10 +366,15 @@ async function charge(req, res) {
           amount: ride[0].totalFare,
           currency: 'usd',
           source: customer.default_source,
-          description: 'Ride payment',
+          description: `Ride #${ride[0].rideID} payment`,
           customer: ride[0].user.stripeID,
         })
 
+        await client.messages.create({
+          body: `Your payment for the ride has been received and processed. We're thrilled to have been a part of your journey. Your continued support means the world to us. Thank you for riding with us!`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: '+919664570980'
+        })
         res.status(200).send({ charge: charge })
       }
     })
