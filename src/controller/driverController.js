@@ -149,7 +149,6 @@ async function fetch(req, res) {
 
 async function edit(req, res) {
   try {
-    if (!req.file) throw new Error("Profile image is required")
     const { id, ...remaining } = req.body
     req.body = remaining
 
@@ -168,13 +167,19 @@ async function edit(req, res) {
     })
 
     driver.cityID = new mongoose.Types.ObjectId(req.body.cityID)
-
     driver.name = capitalizeFirstLetter(req.body.name)
-    driver.profile = 'driver/' + req.file.filename
+
+    if (req.file) {
+      driver.profile = 'driver/' + req.file.filename
+    } else {
+      driver.profile = oldImage
+    }
     await driver.save()
 
-    const uploadPath = path.join(__dirname, "../../uploads")
-    fs.unlinkSync(`${uploadPath}/${oldImage}`)
+    if (req.file) {
+      const uploadPath = path.join(__dirname, "../../uploads")
+      fs.unlinkSync(`${uploadPath}/${oldImage}`)
+    }
 
     const pipeline = [
       {

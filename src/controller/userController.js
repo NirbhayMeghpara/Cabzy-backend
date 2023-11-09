@@ -52,7 +52,7 @@ async function add(req, res) {
       const uploadPath = path.join(__dirname, "../../uploads")
       fs.unlinkSync(`${uploadPath}/user/${req.file.filename}`)
     }
-
+    console.log(error)
     switch (true) {
       case !!(error.keyPattern && error.keyPattern.email):
         return res.status(403).send({
@@ -147,7 +147,6 @@ async function fetchUserByPhone(req, res) {
 
 async function edit(req, res) {
   try {
-    if (!req.file) throw new Error("Profile image is required")
     const { id, ...remaining } = req.body
     req.body = remaining
 
@@ -174,11 +173,18 @@ async function edit(req, res) {
     })
 
     user.name = capitalizeFirstLetter(req.body.name)
-    user.profile = 'user/' + req.file.filename
+    if (req.file) {
+      user.profile = 'user/' + req.file.filename
+    } else {
+      user.profile = oldImage
+    }
+
     await user.save()
 
-    const uploadPath = path.join(__dirname, "../../uploads")
-    fs.unlinkSync(`${uploadPath}/${oldImage}`)
+    if (req.file) {
+      const uploadPath = path.join(__dirname, "../../uploads")
+      fs.unlinkSync(`${uploadPath}/${oldImage}`)
+    }
 
     res.status(200).send(user)
   } catch (error) {
