@@ -7,24 +7,7 @@ function getWelcomeUserEmail(user) {
       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <style>
-        body {
-        margin: 0;
-        padding: 0;
-        }
-        table,
-        td {
-        border-collapse: collapse;
-        }
-        img {
-        border: 0;
-        height: auto;
-        outline: none;
-        text-decoration: none;
-        }
-        p {
-        display: block;
-        margin: 13px 0;
-        }
+        body{margin:0;padding:0}table,td{border-collapse:collapse}img{border:0;height:auto;outline:0;text-decoration:none}p{display:block;margin:13px 0}
       </style>
     </head>
     <body style="background-color: #f9f9f9">
@@ -130,19 +113,19 @@ function getWelcomeUserEmail(user) {
                       </tr>
                       <tr>
                         <td style="width: 100%">
-                                  <img
-                                    height="auto"
-                                    src="https://raw.githubusercontent.com/NirbhayMeghpara/Cabzy/main/src/assets/images/greeting.png"
-                                    style="
-                                    border: 0;
-                                    display: block;
-                                    outline: none;
-                                    text-decoration: none;
-                                    width: 300px;
-                                    margin: 0px auto 10px
-                                    "
-                                    />
-                                </td>
+                          <img
+                            height="auto"
+                            src="https://raw.githubusercontent.com/NirbhayMeghpara/Cabzy/main/src/assets/images/greeting.png"
+                            style="
+                            border: 0;
+                            display: block;
+                            outline: none;
+                            text-decoration: none;
+                            width: 300px;
+                            margin: 0px auto 10px
+                            "
+                            />
+                        </td>
                       </tr>
                       <tr>
                         <td
@@ -344,7 +327,6 @@ function getWelcomeUserEmail(user) {
     </body>
   </html>
   `
-
   return html
 }
 

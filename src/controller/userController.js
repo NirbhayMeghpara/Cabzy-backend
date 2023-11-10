@@ -52,7 +52,6 @@ async function add(req, res) {
       const uploadPath = path.join(__dirname, "../../uploads")
       fs.unlinkSync(`${uploadPath}/user/${req.file.filename}`)
     }
-    console.log(error)
     switch (true) {
       case !!(error.keyPattern && error.keyPattern.email):
         return res.status(403).send({
