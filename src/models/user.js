@@ -11,12 +11,10 @@ const userSchema = new mongoose.Schema(
         if (!/^[a-zA-Z\s'-]+$/.test(value)) throw new Error("Please enter your name properly")
       },
     },
-
     profile: {
       type: String,
       required: true,
     },
-
     email: {
       type: String,
       unique: true,
@@ -27,13 +25,11 @@ const userSchema = new mongoose.Schema(
         if (!validator.isEmail(value)) throw new Error("Entered email is invalid")
       },
     },
-
     phoneCode: {
       type: String,
       trim: true,
       required: true,
     },
-
     phone: {
       type: String,
       required: true,

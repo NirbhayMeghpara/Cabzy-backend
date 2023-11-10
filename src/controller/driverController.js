@@ -5,7 +5,6 @@ const fs = require('fs')
 
 const { capitalizeFirstLetter } = require('./vehiclePriceController')
 const { getNextSequenceValue } = require('./createRideController')
-const { CLIENT_RENEG_LIMIT } = require('tls')
 
 async function add(req, res) {
   try {

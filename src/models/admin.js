@@ -45,7 +45,6 @@ adminSchema.methods.toJSON = function () {
   return adminObject
 }
 
-
 // ------------------------ Generating token ------------------------ //
 
 adminSchema.methods.genToken = async function () {

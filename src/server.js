@@ -12,7 +12,6 @@ const cardRouter = require('./routers/cardRouter')
 const driverRouter = require('./routers/driverRouter')
 const createRideRouter = require('./routers/createRideRouter')
 const socketController = require("./controller/socket")
-const Cron = require("./controller/cron")
 
 const cors = require('cors')
 const path = require("path")

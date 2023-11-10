@@ -3,12 +3,10 @@ const VehicleType = require('../models/vehicleType')
 const fs = require("fs")
 const path = require("path")
 
-
 async function add(req, res) {
   try {
     let vehicleType = req.body.vehicleType
     vehicleType = vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1).toLowerCase()
-
     const vehicleData = {
       vehicleType,
       vehicleImage: 'vehicleType/' + req.file.filename
@@ -17,8 +15,7 @@ async function add(req, res) {
     const vehicle = await new VehicleType(vehicleData)
     await vehicle.save()
     res.status(201).send({ msg: `${vehicleType} added successfully`, data: vehicle })
-  }
-  catch (error) {
+  } catch (error) {
     if (req.file) {
       const uploadPath = path.join(__dirname, "../../uploads")
       fs.unlinkSync(`${uploadPath}/vehicleType/${req.file.filename}`)

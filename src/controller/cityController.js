@@ -146,7 +146,6 @@ async function findCity(req, res) {
 
     res.send(result)
   } catch (error) {
-    console.error(error)
     res.status(500).json({ error: error.message })
   }
 }
