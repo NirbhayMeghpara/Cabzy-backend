@@ -61,6 +61,7 @@ const createRideSchema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
+      lowercase: true,
       default: "cash"
     },
     rideDate: {
