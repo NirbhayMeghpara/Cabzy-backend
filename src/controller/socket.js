@@ -10,8 +10,19 @@ async function handleSocket(io) {
   console.log("Handle socket start")
   socketIo = io
   io.on('connection', (socket) => {
-    socket.on('assignToSelectedDriver', async ({ ride, driver }) => {
+    
+    console.log(`Socket connected: ${socket.id}`)
+
+    // Handle the 'disconnect' event
+    socket.on('disconnect', () => {
+      // Log when a socket is disconnected
+      console.log(`Socket disconnected: ${socket.id}`)
+    })
+
+    socket.on('assignToSelectedDriver', async (data) => {
       try {
+        const { ride, driver } = JSON.parse(data)
+        
         if (driver.status === 0) {
           const updatedDriver = await Driver.findByIdAndUpdate(driver._id, { status: 1, rideAssignTime: Date.now() }, {
             new: true,
@@ -38,7 +49,9 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on('requestAcceptedByDriver', async ({ ride }) => {
+    socket.on('requestAcceptedByDriver', async (data) => {
+      const { ride } = data
+
       try {
         const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 3, assignSelected: true }, {
           new: true,
@@ -69,8 +82,9 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on('selectedDriverRejectRide', async ({ ride }) => {
+    socket.on('selectedDriverRejectRide', async (data) => {
       try {
+        const { ride } = data
 
         const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
           new: true,
@@ -105,7 +119,8 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on('nearestDriverRejectRide', async ({ ride }) => {
+    socket.on('nearestDriverRejectRide', async (data) => {
+      const { ride } = data
       try {
         const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
           new: true,
