@@ -45,12 +45,13 @@ async function handleSocket(io) {
           }
         }
       } catch (error) {
+        console.log(error)
         emitSocket("error", error)
       }
     })
 
     socket.on('requestAcceptedByDriver', async (data) => {
-      const { ride } = data
+      const { ride } = JSON.parse(data)
 
       try {
         const updatedRide = await CreateRide.findByIdAndUpdate(ride._id, { status: 3, assignSelected: true }, {
@@ -66,11 +67,11 @@ async function handleSocket(io) {
         const pipeline = getRidePipeline(updatedRide._id)
         const rideData = await CreateRide.aggregate(pipeline)
         if (rideData[0] && updatedDriver) {
-          await client.messages.create({
-            body: `Good news! Your ride #${rideData[0].rideID} request has been accepted by a driver, please be ready at your pickup location. They'll be on their way shortly.`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: '+919664570980'
-          })
+          // await client.messages.create({
+          //   body: `Good news! Your ride #${rideData[0].rideID} request has been accepted by a driver, please be ready at your pickup location. They'll be on their way shortly.`,
+          //   from: process.env.TWILIO_PHONE_NUMBER,
+          //   to: '+919664570980'
+          // })
 
           emitSocket("rideAccepted", rideData[0])
         } else {
@@ -84,7 +85,7 @@ async function handleSocket(io) {
 
     socket.on('selectedDriverRejectRide', async (data) => {
       try {
-        const { ride } = data
+        const { ride } = JSON.parse(data)
 
         const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
           new: true,
@@ -107,7 +108,8 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on('assignToNearestDriver', async (ride) => {
+    socket.on('assignToNearestDriver', async (data) => {
+      const { ride } = JSON.parse(data)
       try {
         const updatedRide = await CreateRide.findById(ride._id)
         updatedRide.rejectedDriverID = []
@@ -120,7 +122,7 @@ async function handleSocket(io) {
     })
 
     socket.on('nearestDriverRejectRide', async (data) => {
-      const { ride } = data
+      const { ride } = JSON.parse(data)
       try {
         const updatedDriver = await Driver.findByIdAndUpdate(ride.driverID, { $unset: { rideAssignTime: 1 }, status: 0 }, {
           new: true,
@@ -152,11 +154,11 @@ async function handleSocket(io) {
           updatedRide.status = ride.status + 1
 
           if (updatedRide.status === 6) {
-            await client.messages.create({
-              body: `Exciting news! Your ride #${updatedRide.rideID} journey has begun. Driver is now en route to your destination. Sit back, relax, and enjoy the ride with us! Feel free to track the ride in real-time on the app..`,
-              from: process.env.TWILIO_PHONE_NUMBER,
-              to: '+919664570980'
-            })
+            // await client.messages.create({
+            //   body: `Exciting news! Your ride #${updatedRide.rideID} journey has begun. Driver is now en route to your destination. Sit back, relax, and enjoy the ride with us! Feel free to track the ride in real-time on the app..`,
+            //   from: process.env.TWILIO_PHONE_NUMBER,
+            //   to: '+919664570980'
+            // })
           }
 
           if (updatedRide.status === 7) {
@@ -165,11 +167,11 @@ async function handleSocket(io) {
               runValidators: true,
             })
 
-            await client.messages.create({
-              body: `You've reached your destination with ease. Your ride #${updatedRide.rideID} is now complete. We appreciate you choosing Cabzy for your journey. Your feedback is valuable to us. Please take a moment to share your thoughts about your experience. Safe travels!`,
-              from: process.env.TWILIO_PHONE_NUMBER,
-              to: '+919664570980'
-            })
+            // await client.messages.create({
+            //   body: `You've reached your destination with ease. Your ride #${updatedRide.rideID} is now complete. We appreciate you choosing Cabzy for your journey. Your feedback is valuable to us. Please take a moment to share your thoughts about your experience. Safe travels!`,
+            //   from: process.env.TWILIO_PHONE_NUMBER,
+            //   to: '+919664570980'
+            // })
           }
           await updatedRide.save()
 
