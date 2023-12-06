@@ -370,11 +370,11 @@ async function charge(req, res) {
           customer: ride[0].user.stripeID,
         })
 
-        await client.messages.create({
-          body: `Your payment for the ride has been received and processed. We're thrilled to have been a part of your journey. Your continued support means the world to us. Thank you for riding with us!`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: '+919664570980'
-        })
+        // await client.messages.create({
+        //   body: `Your payment for the ride has been received and processed. We're thrilled to have been a part of your journey. Your continued support means the world to us. Thank you for riding with us!`,
+        //   from: process.env.TWILIO_PHONE_NUMBER,
+        //   to: '+919664570980'
+        // })
         res.status(200).send({ charge: charge })
       }
     })
