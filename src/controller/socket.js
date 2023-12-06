@@ -149,8 +149,9 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on("updateRideStatus", async (ride) => {
+    socket.on("updateRideStatus", async (data) => {
       try {
+        const ride = JSON.parse(data)
         if (ride.status < 7) {
           const updatedRide = await CreateRide.findById(ride._id)
           updatedRide.status = ride.status + 1
@@ -186,8 +187,10 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on("cancelRide", async (ride) => {
+    socket.on("cancelRide", async (data) => {
       try {
+        const ride = JSON.parse(data)
+
         if (ride.status === 1) {
           const updatedRide = await CreateRide.findById(ride._id)
           updatedRide.status = -1
