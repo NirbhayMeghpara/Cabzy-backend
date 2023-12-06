@@ -108,8 +108,9 @@ async function handleSocket(io) {
       }
     })
 
-    socket.on('assignToNearestDriver', async (data) => {
-      const { ride } = JSON.parse(data)
+    socket.on('assignToNearestDriver', async (data) => { 
+      const ride  = JSON.parse(data)
+
       try {
         const updatedRide = await CreateRide.findById(ride._id)
         updatedRide.rejectedDriverID = []
@@ -117,6 +118,7 @@ async function handleSocket(io) {
         await updatedRide.save()
         assignDriver(updatedRide)
       } catch (error) {
+        console.log(error)
         emitSocket("error", error)
       }
     })
