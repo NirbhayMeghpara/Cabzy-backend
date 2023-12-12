@@ -98,7 +98,9 @@ async function handleSocket(io) {
         })
 
         if (updatedRide && updatedDriver) {
-          emitSocket("rideRejected", { rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
+          const pipeline = getRidePipeline(updatedRide._id)
+          const rides = await CreateRide.aggregate(pipeline)
+          emitSocket("rideRejected", { ride: rides[0], rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
         } else {
           emitSocket("error", "Error occured while rejecting a ride by driver")
         }
@@ -139,7 +141,9 @@ async function handleSocket(io) {
         await updatedRide.save()
 
         if (updatedRide && updatedDriver) {
-          emitSocket("rideRejected", { rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
+          const pipeline = getRidePipeline(updatedRide._id)
+          const rides = await CreateRide.aggregate(pipeline)
+          emitSocket("rideRejected", { ride: rides[0], rideID: updatedRide.rideID, message: `${updatedDriver.name} rejected a ride :( ` })
         } else {
           emitSocket("error", "Error occured while rejecting a ride by driver")
         }
