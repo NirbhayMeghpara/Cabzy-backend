@@ -1,6 +1,8 @@
 const mongoose = require("mongoose")
 const CreateRide = require("../models/createRide")
+const Admin = require('../models/admin')
 const Driver = require("../models/driver")
+const sendPushNotification = require('./sendPushNotification')
 require('dotenv').config()
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
@@ -226,6 +228,13 @@ async function assignDriver(rideData) {
     const pipeline = getRidePipeline(updatedRide._id)
     const result = await CreateRide.aggregate(pipeline)
     emitSocket('rideTimeout', result[0])
+    
+    const admins = await Admin.find({})
+    
+    if(admins[0].deviceToken) {
+      await sendPushNotification.sendToAndroid(admins[0].deviceToken, "Ride Timeout", `Ride: ${result[0].rideID} has been timed out :(`)
+    }
+
     return
   }
   let updatedRide = rideData

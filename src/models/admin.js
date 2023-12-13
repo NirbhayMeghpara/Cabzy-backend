@@ -30,6 +30,10 @@ const adminSchema = new mongoose.Schema({
       },
     },
   ],
+  deviceToken: {
+    type: String,
+    trim: true,
+  }
 })
 
 // --------- Sometimes, we want to convert these documents to JSON format. For instance, we might want to send a admin's data as a response to an API request. When we do this, Mongoose automatically converts the document to JSON using a built-in method called toJSON. However, sometimes we want more control over how this conversion happens. whenever we call JSON.stringify(admin), it will first go through your custom toJSON method.   --------//
