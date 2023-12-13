@@ -9,6 +9,11 @@ router.post("/login", async (req, res) => {
     const admin = await Admin.findByCredentials(req.body.email, req.body.password)
     const token = await admin.genToken()
 
+    if(req.body.deviceToken) {
+      admin.deviceToken = req.body.deviceToken
+      await admin.save()
+    }
+
     res.send({ admin, token })
   } catch (error) {
     res.status(401).send({ error: error.message })
